@@ -19,7 +19,7 @@ import {
   type Capture,
   type RecordCache,
 } from "./storage";
-import { pick, preserve, inspect } from "./capture";
+import { pick, preserve, inspect, cleanupCaptureCache } from "./capture";
 import { copy } from "./strings";
 import {
   extractText,
@@ -141,8 +141,10 @@ export default function App() {
     setSelected(undefined);
     setPreview(false);
     setDraft(undefined);
+    let preserved = false;
     try {
       const { capture: c, duplicate } = await preserve(bytes, mime, store);
+      preserved = true;
       setCapture(c);
       await reload();
       if (duplicate) {
@@ -173,6 +175,13 @@ export default function App() {
         "Could not finish reading this capture. Any original already saved is retained. Try again or choose another image.",
       );
     } finally {
+      try {
+        await cleanupCaptureCache(uri, preserved);
+      } catch {
+        setError(
+          "The original is saved, but temporary capture cleanup failed. Retry on this device before using real documents.",
+        );
+      }
       setBusy(false);
     }
   }
@@ -214,6 +223,7 @@ export default function App() {
     if (!store || !c.quality || !mayExtract(c.quality, !!c.useAnyway)) return;
     setBusy(true);
     setError("");
+    let pending = c;
     try {
       await store.saveCapture({ ...c, state: "local_pending" });
       if (c.mime === "application/pdf") {
@@ -234,7 +244,7 @@ export default function App() {
         useAnyway: !!c.useAnyway,
       });
       if (!ack.durable || ack.hash !== c.hash) throw Error("INVALID_ACK");
-      const pending = { ...c, serverId: ack.id };
+      pending = { ...c, serverId: ack.id };
       await store.saveCapture(pending);
       setCapture(pending);
       setMessage(
@@ -262,8 +272,8 @@ export default function App() {
       }
       throw Error("PROCESSING_PENDING");
     } catch {
-      await store.saveCapture({ ...c, state: "failed" });
-      setCapture({ ...c, state: "failed" });
+      await store.saveCapture({ ...pending, state: "failed" });
+      setCapture({ ...pending, state: "failed" });
       await reload();
       setError(
         "Processing is unavailable or pending. The original is safe on this device. Retry after reconnecting, or review manually.",
@@ -341,7 +351,7 @@ export default function App() {
           version: 1,
         };
       }
-      if (capture.serverId)
+      if (capture.serverId && draft.provider !== "local-text-parser")
         record = {
           ...record,
           serverCaptureId: record.captureId,
@@ -372,24 +382,64 @@ export default function App() {
       const original = captures.find((c) => c.id === record.captureId);
       if (!original)
         throw Error("Original evidence is unavailable on this device.");
-      const updated = record.serverCaptureId
-        ? {
+      let recovered = false;
+      let applied = true;
+      let updated: RecordCache;
+      if (record.serverCaptureId) {
+        try {
+          updated = {
             ...record,
             ...(await request(`/v1/purchases/${record.id}/attention`, {
               version: record.version,
               command,
             })),
-          }
-        : updateAttention(
-            record,
-            command,
-            record.version,
-            new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" }),
+          };
+        } catch {
+          // A mutation may have committed before its response was lost. Refresh
+          // authoritative state, never repeat a stale version or assume success.
+          const records: RecordCache[] = await request("/v1/records");
+          const latest = records.find(
+            (r) => r.id === record.id && r.captureId === record.serverCaptureId,
           );
+          if (!latest || latest.version < record.version)
+            throw Error("RECOVERY_UNAVAILABLE");
+          updated = {
+            ...record,
+            events: latest.events,
+            cues: latest.cues,
+            version: latest.version,
+          };
+          recovered = true;
+          applied =
+            command.type === "stop"
+              ? latest.events.some(
+                  (e) =>
+                    e.kind === command.kind && e.status === "not_applicable",
+                )
+              : latest.cues.some(
+                  (c) =>
+                    c.id === command.cueId &&
+                    (command.type === "dismiss"
+                      ? c.state === "dismissed"
+                      : c.state === "scheduled" &&
+                        c.scheduledFor === command.date),
+                );
+        }
+      } else
+        updated = updateAttention(
+          record,
+          command,
+          record.version,
+          new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" }),
+        );
       await store.saveRecord(updated, original);
       await reload();
       if (selected?.id === record.id) setSelected(updated);
-      setMessage("Reminder updated. Purchase and original evidence kept.");
+      setMessage(
+        recovered && !applied
+          ? "Current reminder state recovered. Review it before trying your change again."
+          : "Reminder updated. Purchase and original evidence kept.",
+      );
     } catch {
       setError(
         "Could not update this reminder. It remains saved; try again after reconnecting.",
@@ -669,6 +719,9 @@ export default function App() {
                     o.excerpt
                       ? `Receipt: “${o.excerpt}”`
                       : "No supporting text found.",
+                  )}
+                  {text(
+                    `Extraction confidence: ${o.confidence}. ${o.reason === "missing" ? "Not found in evidence." : o.reason === "ambiguous_or_invalid_date" ? "Date is ambiguous or invalid; keep unknown unless verified." : "Verify this value against the original."}`,
                   )}
                   {consequential.has(o.field) ? (
                     <View style={styles.row}>

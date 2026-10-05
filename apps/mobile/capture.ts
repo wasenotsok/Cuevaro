@@ -2,7 +2,8 @@ import * as Crypto from "expo-crypto";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import * as DocumentPicker from "expo-document-picker";
-import { File } from "expo-file-system";
+import { File, Paths } from "expo-file-system";
+import { cleanupOwnedCache } from "../../packages/domain/capture-cache";
 import { Platform, Image } from "react-native";
 import jpeg from "jpeg-js";
 import { qualityGate } from "../../packages/domain/quality";
@@ -84,19 +85,33 @@ export async function inspect(uri: string) {
     [{ resize: { width: Math.min(900, sourceWidth) } }],
     { format: ImageManipulator.SaveFormat.JPEG, base64: true, compress: 0.9 },
   );
-  const data = Uint8Array.from(atob(image.base64!), (c) => c.charCodeAt(0));
-  const decoded = jpeg.decode(data, { useTArray: true, maxResolutionInMP: 10 });
-  const luminance = new Uint8Array(decoded.width * decoded.height);
-  for (let i = 0; i < luminance.length; i++)
-    luminance[i] = Math.round(
-      0.299 * decoded.data[i * 4] +
-        0.587 * decoded.data[i * 4 + 1] +
-        0.114 * decoded.data[i * 4 + 2],
-    );
-  // Original dimensions/readability must be evaluated, not upscaled pixels.
-  return qualityGate({
-    width: decoded.width,
-    height: decoded.height,
-    luminance,
+  try {
+    const data = Uint8Array.from(atob(image.base64!), (c) => c.charCodeAt(0));
+    const decoded = jpeg.decode(data, {
+      useTArray: true,
+      maxResolutionInMP: 10,
+    });
+    const luminance = new Uint8Array(decoded.width * decoded.height);
+    for (let i = 0; i < luminance.length; i++)
+      luminance[i] = Math.round(
+        0.299 * decoded.data[i * 4] +
+          0.587 * decoded.data[i * 4 + 1] +
+          0.114 * decoded.data[i * 4 + 2],
+      );
+    // Original dimensions/readability must be evaluated, not upscaled pixels.
+    return qualityGate({
+      width: decoded.width,
+      height: decoded.height,
+      luminance,
+    });
+  } finally {
+    await cleanupCaptureCache(image.uri, true);
+  }
+}
+export async function cleanupCaptureCache(uri: string, preserved: boolean) {
+  if (Platform.OS === "web") return;
+  await cleanupOwnedCache(uri, Paths.cache.uri, preserved, async (owned) => {
+    const file = new File(owned);
+    if (file.exists) file.delete();
   });
 }

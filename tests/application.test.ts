@@ -73,6 +73,11 @@ it("real local OCR → review → relational facts/items/events/cues → retriev
   const response = await app.inject({ url: "/v1/records" });
   expect(response.statusCode).toBe(200);
   expect(response.json()[0].id).toBe(r.id);
+  expect(
+    response
+      .json()[0]
+      .facts.map((f: { observation: unknown }) => f.observation),
+  ).toEqual(r.facts.map((f) => f.observation));
   const audit = await db.query("select * from audit_events");
   expect(JSON.stringify(audit.rows)).not.toContain("Electric kettle");
   expect((await db.query("select * from items")).rows).toHaveLength(1);
@@ -172,6 +177,14 @@ it("API rejects foreign origins, missing mutation marker, unknown keys and log-w
   expect(
     (
       await app.inject({
+        url: "/v1/fixture",
+        headers: { host: "untrusted.example:4329" },
+      })
+    ).statusCode,
+  ).toBe(403);
+  expect(
+    (
+      await app.inject({
         url: "/v1/records",
         headers: { origin: "https://evil.example" },
       })
@@ -196,5 +209,31 @@ it("API rejects foreign origins, missing mutation marker, unknown keys and log-w
   expect(r.statusCode).toBe(400);
   expect(r.body).not.toContain("sensitive-fixture");
   await app.close();
+  await db.close();
+});
+it("expired final worker lease terminates and stale completion cannot overwrite it", async () => {
+  const db = await openDevelopmentDb();
+  const c = await createCapture(db, actor, randomUUID(), await receipt(), true);
+  await db.query("update jobs set attempts=2");
+  await runOneJob(db, async (_bytes, evidence) => {
+    await db.query("update jobs set leased_until=now()-interval '1 minute'");
+    expect(await runOneJob(db)).toBe(false);
+    return extractText(
+      syntheticReceiptText,
+      evidence,
+      "questionable",
+      "2026-10-05",
+    );
+  });
+  expect(
+    (await db.query<{ state: string }>("select state from jobs")).rows[0].state,
+  ).toBe("dead_letter");
+  expect((await getDraft(db, actor, c.id)).state).toBe("failed");
+  expect(
+    (await db.query("select * from private.review_drafts")).rows,
+  ).toHaveLength(0);
+  expect(
+    (await db.query("select * from private.evidence_bytes")).rows,
+  ).toHaveLength(1);
   await db.close();
 });

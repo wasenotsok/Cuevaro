@@ -59,6 +59,8 @@ export async function buildApi(
 ) {
   const app = Fastify({ logger: false, bodyLimit: 28000000 });
   app.addHook("onRequest", async (req, res) => {
+    if (!/^(localhost|127\.0\.0\.1)(:(4329|80))?$/.test(req.headers.host ?? ""))
+      return res.code(403).send({ code: "HOST_DENIED" });
     const origin = req.headers.origin;
     if (
       origin &&
@@ -170,7 +172,7 @@ export async function buildApi(
         createdAt: p.created_at,
         facts: (
           await db.query(
-            `select f.id,f.field_name as field,f.value,f.authority_type as authority,f.confirmed_by_user_id as "actorId",f.confirmed_at as "confirmedAt",json_build_object('field',o.field_name,'value',o.value,'confidence',o.confidence,'evidenceId',o.evidence_id,'excerpt',o.source_locator->>'excerpt','source',o.source_locator->>'source','version',o.source_locator->>'version','reason','requires_review') as observation from fact_assertions f join observations o on o.id=f.source_observation_id where f.purchase_id=$1 and f.household_id=$2`,
+            `select f.id,f.field_name as field,f.value,f.authority_type as authority,f.confirmed_by_user_id as "actorId",f.confirmed_at as "confirmedAt",json_build_object('field',o.field_name,'value',o.value,'confidence',o.confidence,'evidenceId',o.evidence_id,'excerpt',o.source_locator->>'excerpt','source',o.source_locator->>'source','version',o.source_locator->>'version','reason',coalesce(o.source_locator->>'reason','requires_review')) as observation from fact_assertions f join observations o on o.id=f.source_observation_id where f.purchase_id=$1 and f.household_id=$2`,
             [p.id, developmentActor.householdId],
           )
         ).rows,

@@ -168,6 +168,17 @@ export async function createCapture(
 }
 export async function runOneJob(db: PGlite, extract = extractOriginal) {
   const job = await db.transaction(async (tx) => {
+    const exhausted = await tx.query<{
+      resource_id: string;
+      household_id: string;
+    }>(
+      `update jobs set state='dead_letter',error_code='EXHAUSTED_LEASE',leased_until=null where type='extract' and state='processing' and attempts>=3 and leased_until<now() returning resource_id,household_id`,
+    );
+    for (const expired of exhausted.rows)
+      await tx.query(
+        `update captures set state='failed' where id=$1 and household_id=$2 and state in ('stored','processing','failed')`,
+        [expired.resource_id, expired.household_id],
+      );
     const { rows } = await tx.query<{
       id: string;
       resource_id: string;
@@ -320,6 +331,7 @@ export async function confirmPurchase(
             excerpt: f.observation.excerpt,
             source: f.observation.source,
             version: f.observation.version,
+            reason: f.observation.reason,
           }),
         ],
       );

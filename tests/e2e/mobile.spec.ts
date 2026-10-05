@@ -60,6 +60,10 @@ test("mobile receipt → quality warning → real OCR → reviewed lifecycle →
     ),
   ).toBe(true);
   await page.getByRole("button", { name: "Timeline", exact: true }).click();
+  await page.route("**/attention", async (route) => {
+    await route.fetch();
+    await route.abort();
+  });
   await page
     .getByRole("button", { name: "Stop return reminders", exact: true })
     .first()
@@ -70,6 +74,53 @@ test("mobile receipt → quality warning → real OCR → reviewed lifecycle →
   await page.getByRole("button", { name: "Things", exact: true }).click();
   await page.getByRole("button", { name: "Open saved purchase" }).click();
   await expect(page.getByText(/Reminders stopped/)).toBeVisible();
+  await page.unroute("**/attention");
+  await page.getByRole("button", { name: "Timeline", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Stop warranty reminders", exact: true })
+    .first()
+    .click();
+  await expect(
+    page.getByText("Warranty reminder", { exact: true }),
+  ).toHaveCount(0);
+});
+test("uploaded capture reviewed manually retains working local reminder controls", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page
+    .getByRole("button", { name: "Open synthetic development preview" })
+    .click();
+  await page.getByRole("button", { name: "Try synthetic receipt" }).click();
+  await page.route("**/v1/captures/*", (route) => route.abort());
+  await page.getByRole("button", { name: "Use anyway", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("original is safe");
+  await page
+    .getByRole("button", { name: "Review manually", exact: true })
+    .click();
+  await page.getByLabel("Item", { exact: true }).fill("Manual kettle");
+  await page.getByLabel("Purchase date", { exact: true }).fill("2026-10-05");
+  await page
+    .getByRole("button", { name: "Confirm purchase date", exact: true })
+    .click();
+  await page.getByLabel("Return deadline", { exact: true }).fill("2026-10-19");
+  await page
+    .getByRole("button", { name: "Confirm return deadline", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Save purchase & cues" }).click();
+  await page.getByRole("button", { name: "Timeline", exact: true }).click();
+  let requests = 0;
+  page.on("request", (req) => {
+    if (req.url().endsWith("/attention")) requests++;
+  });
+  await page
+    .getByRole("button", { name: "Stop return reminders", exact: true })
+    .first()
+    .click();
+  await expect(
+    page.getByText("Return window reminder", { exact: true }),
+  ).toHaveCount(0);
+  expect(requests).toBe(0);
 });
 test("bad image is retained with retake choices; no use-anyway bypass", async ({
   page,
