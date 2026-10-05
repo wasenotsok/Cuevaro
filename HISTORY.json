@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "items": [
+    {
+      "key": "phase-0",
+      "display_name": "Phase 0 — Product Definition and Commercial Blueprint",
+      "type": "phase",
+      "status": "completed",
+      "completed_at": "2026-10-05T18:09:00+08:00",
+      "lessons": [
+        "Keep the product focused on capture-to-lifecycle value; competitors already cover individual storage/reminder features."
+      ]
+    },
+    {
+      "key": "phase-1",
+      "display_name": "Phase 1 — Engineering Foundation",
+      "type": "phase",
+      "status": "planned",
+      "dependencies": [
+        "phase-0"
+      ]
+    },
+    {
+      "key": "phase-2",
+      "display_name": "Phase 2 — Capture and Quality Gate",
+      "type": "phase",
+      "status": "planned",
+      "dependencies": [
+        "phase-1"
+      ]
+    },
+    {
+      "key": "phase-3",
+      "display_name": "Phase 3 — Intelligent Purchase Lifecycle",
+      "type": "phase",
+      "status": "planned",
+      "dependencies": [
+        "phase-2"
+      ]
+    },
+    {
+      "key": "phase-4",
+      "display_name": "Phase 4 — Watch, Remind, Act",
+      "type": "phase",
+      "status": "planned",
+      "dependencies": [
+        "phase-3"
+      ]
+    },
+    {
+      "key": "phase-5",
+      "display_name": "Phase 5 — Trust, Desktop Companion, and Household Readiness",
+      "type": "phase",
+      "status": "planned",
+      "dependencies": [
+        "phase-4"
+      ]
+    },
+    {
+      "key": "phase-6",
+      "display_name": "Phase 6 — Closed Alpha",
+      "type": "phase",
+      "status": "planned",
+      "dependencies": [
+        "phase-5"
+      ]
+    },
+    {
+      "key": "phase-7",
+      "display_name": "Phase 7 — Commercial Beta / V1",
+      "type": "phase",
+      "status": "planned",
+      "dependencies": [
+        "phase-6"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "event_id": "cuevaro-name",
+      "event_type": "decision",
+      "date": "2026-10-05",
+      "title": "Cuevaro selected as working product name",
+      "actor": "Owner"
+    },
+    {
+      "event_id": "cuevaro-commercial",
+      "event_type": "decision",
+      "date": "2026-10-05",
+      "title": "Cuevaro defined as an aspiring commercial product",
+      "actor": "Owner"
+    },
+    {
+      "event_id": "cuevaro-mobile-first",
+      "event_type": "decision",
+      "date": "2026-10-05",
+      "title": "Mobile-first product with desktop/web companion confirmed",
+      "actor": "Owner"
+    },
+    {
+      "event_id": "cuevaro-quality-gate",
+      "event_type": "decision",
+      "date": "2026-10-05",
+      "title": "Capture Quality Gate required for blurry and otherwise unreliable photos",
+      "actor": "Owner"
+    },
+    {
+      "event_id": "cuevaro-quick-replies",
+      "event_type": "decision",
+      "date": "2026-10-05",
+      "title": "Contextual Quick Replies required for predictable assistant questions",
+      "actor": "Owner"
+    },
+    {
+      "event_id": "cuevaro-blueprint",
+      "event_type": "completed",
+      "date": "2026-10-05",
+      "title": "Commercial product blueprint and red-team review published",
+      "actor": "Product study"
+    }
+  ]
+}
