@@ -24,6 +24,8 @@ Verified evidence is described in [docs/VALIDATION.md](docs/VALIDATION.md). This
 
 [Draft PR #1](https://github.com/wasenotsok/Cuevaro/pull/1) is published. [Linux CI](https://github.com/wasenotsok/Cuevaro/actions/runs/37331727837) passed all implementation verification steps at `b475c5fcaf9ec3268c85aded3726b9f385f67607`; the dependency gate failed with the documented 28 high findings. No merge or deployment occurred.
 
+Final pre-review head `5c0d52f84ff235e7e0da90f10e762199935cac49` separately completed [PR CI 37332080788](https://github.com/wasenotsok/Cuevaro/actions/runs/37332080788): verification passed; dependency gate failed. [Independent review](docs/INDEPENDENT_REVIEW.md) then found and verified repairs for reminder recovery, final worker retry, native temporary-file ownership/cleanup and observation reason preservation. These later fixes require their own checks and do not inherit historical CI. A concrete [private managed-service proposal](docs/PRIVATE_DEVELOPMENT_PLAN.md) is prepared; nothing was activated.
+
 ## Next safe work and external gates
 
 1. Review the draft development PR and its exact CI results; resolve available dependency fixes without weakening the gate.
