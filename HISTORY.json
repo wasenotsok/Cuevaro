@@ -15,10 +15,11 @@
       "key": "phase-1",
       "display_name": "Phase 1 — Engineering Foundation",
       "type": "phase",
-      "status": "planned",
+      "status": "in_progress",
       "dependencies": [
         "phase-0"
-      ]
+      ],
+      "started_at": "2026-10-05T15:03:33.3608387Z"
     },
     {
       "key": "phase-2",
@@ -117,6 +118,31 @@
       "date": "2026-10-05",
       "title": "Commercial product blueprint and red-team review published",
       "actor": "Product study"
+    },
+    {
+      "event_id": "cuevaro-continuous-implementation",
+      "event_type": "decision",
+      "date": "2026-10-05",
+      "title": "Owner granted continuous bounded Cuevaro development authority",
+      "actor": "Owner"
+    },
+    {
+      "event_id": "cuevaro-local-slice",
+      "event_type": "implementation",
+      "date": "2026-10-05",
+      "timestamp": "2026-10-05T15:03:33.3708331Z",
+      "title": "Synthetic local foundation and receipt-to-lifecycle slice implemented; roadmap gates remain open",
+      "actor": "Development",
+      "evidence": [
+        "docs/VALIDATION.md",
+        "CURRENT_STATUS.md"
+      ],
+      "limitations": [
+        "No native hardware verification",
+        "No managed auth/storage/staging activation",
+        "No production AI or push delivery",
+        "Unpatched dependency release gate"
+      ]
     }
   ]
 }

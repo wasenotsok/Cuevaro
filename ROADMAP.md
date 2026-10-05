@@ -34,8 +34,8 @@ Gate:
 - documentation is internally coherent;
 - Owner can read the repository and understand what Cuevaro is, why it exists, what V1 does, and how development should begin.
 
-## Phase 1 — Engineering Foundation
-**Status: Planned**
+## Phase 1 - Engineering Foundation
+**Status: In progress — local foundation implemented; managed-service, staging and real-device gates open**
 
 Goal: establish the secure mobile-first skeleton.
 
@@ -64,8 +64,10 @@ Gate:
 - mobile app runs on real Android/iOS hardware;
 - CI blocks obvious regressions/secrets.
 
-## Phase 2 — Capture and Quality Gate
+## Phase 2 - Capture and Quality Gate
 **Status: Planned**
+
+Local contribution, 2026-10-05: original preservation, camera/library/PDF import seams, retry/deduplication and conservative three-state preflight are implemented/tested in the development slice. Geometry/occlusion detection and representative camera calibration remain open. This does not close Phase 1 or this phase's gate.
 
 Goal: make capture faster and safer than manual entry.
 
@@ -87,8 +89,10 @@ Gate:
 - bad images are caught at useful accuracy without excessive false rejection;
 - common capture path is comfortable one-handed on supported phones.
 
-## Phase 3 — Intelligent Purchase Lifecycle
+## Phase 3 - Intelligent Purchase Lifecycle
 **Status: Planned**
+
+Local contribution, 2026-10-05: bundled local OCR over synthetic labeled receipts, provenance/confidence review, contextual replies and explicit supported dates/Unknown are implemented in sequence. Broad receipt/provider extraction, multi-item and policy research remain open; phase gate is not met.
 
 Goal: turn evidence into a trustworthy useful record.
 
@@ -111,8 +115,10 @@ Gate:
 - high-consequence fields never silently become truth from low-confidence AI;
 - source/evidence is visible for consequential dates.
 
-## Phase 4 — Watch, Remind, Act
+## Phase 4 - Watch, Remind, Act
 **Status: Planned**
+
+Local contribution, 2026-10-05: deterministic in-app cue dates, persistence, versioned snooze/dismiss/stop and saved-record retrieval are developed. Production scheduler/push delivery, action packs and related phase acceptance remain open. No post-V1 module was started.
 
 Goal: fulfill the product promise after capture.
 

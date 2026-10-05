@@ -35,6 +35,9 @@ Scoring: Probability (P) and Impact (I): Low / Medium / High
 | R-28 | Overengineering delays validation | H | M | managed services, monolith+worker, phase gates, no premature microservices |
 | R-29 | No real iOS/Android device testing | M | H | physical device matrix before beta |
 | R-30 | Public repo accidentally receives secrets/private data | M | H | secret scanning, .gitignore, fixture policy, CI checks |
+| R-31 | Synthetic developer slice mistaken for complete native product | M | H | visible development mode, no cloud/push claims, native hardware and managed-service gates stay open |
+| R-32 | Global image heuristics miss local glare, cut-off, skew or occlusion | H | H | missing verified geometry yields Questionable; mandatory override and fact review; calibrated camera benchmark/detectors still required |
+| R-33 | Unpatched upstream tooling advisories propagate into release | M | H | separate failing CI dependency gate; synthetic loopback-only scope; no release waiver; track upstream fixes |
 
 ## Top launch risks
 

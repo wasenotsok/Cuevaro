@@ -144,3 +144,33 @@ Cuevaro V1 is not:
 Do not create a subscription whose main value is storing a reminder. Paid value should come from recurring intelligence, lifecycle watching, secure sync, collaboration, policy intelligence, action preparation, and ongoing infrastructure.
 
 Pricing remains a hypothesis until tested.
+
+## D-016 — Local engineering baseline
+**Status:** Implemented development choice under standing authority
+**Date:** 2026-10-05
+
+Use the recommended Expo/React Native TypeScript monorepo and boring Fastify API. Expo SDK 57 dependencies are pinned/aligned via the lockfile and React Native override. PostgreSQL remains canonical; PGlite supplies real embedded PostgreSQL for synthetic local development/integration. Supabase migrations and guarded adapter seams follow D-011. No managed project/region or production authentication was activated.
+
+## D-017 — Honest, separated development mode
+**Status:** Implemented development safeguard
+**Date:** 2026-10-05
+
+The loopback API has one clearly synthetic fixture identity and is not a custom production auth system. Native originals/cache require SQLCipher and a device-only secure-store key; Expo Go fails closed. Browser preview is synthetic-only and has no encryption/cloud-backup claim. A managed adapter accepts only actor objects minted by its own `getUser` path, revalidates identity/membership for privileged storage operations, and cannot trust client-declared actor IDs.
+
+## D-018 — Conservative preflight and local OCR
+**Status:** Implemented provisional development baseline; calibration open
+**Date:** 2026-10-05
+
+Global pixel checks cover blur/exposure/contrast/resolution. Absent verified edges returns Questionable, never Good. Geometry, regional glare, occlusion and page completeness are not claimed detected from pixel heuristics. Local Tesseract uses bundled language data; no evidence is sent to an AI vendor. The current parser supports explicit labeled single-item receipt fields and preserves ambiguity/Unknown. This is genuine OCR with limited extraction, not a fixture-output provider or calibrated commercial model.
+
+## D-019 — Supported facts before consequences
+**Status:** Implemented development behavior
+**Date:** 2026-10-05
+
+Only explicit validated and user-reviewed dates create current return/warranty events. No merchant return period, warranty eligibility or regional law is assumed. Original observations survive user corrections. Calendar-date cue calculations record timezone/source fact IDs/rule version; optimistic versions govern reminder changes. Stopping reminders retains purchase/evidence and audit history.
+
+## D-020 — Dependency findings remain a release gate
+**Status:** Active engineering blocker; no waiver
+**Date:** 2026-10-05
+
+Available Vitest/UUID fixes were installed and verified. `braces` (GHSA-vfj7-8cjw-p6xm) and `node-forge` (GHSA-86w9-cpqp-85rv) remain upstream high advisories without a published patched release at inspection. CI keeps a separate failing dependency gate. Synthetic local development does not authorize public deployment or acceptance of these risks for real users.

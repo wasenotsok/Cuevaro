@@ -2,7 +2,7 @@
 
 > **Working product name:** Cuevaro  
 > **Internal concept:** Life Admin  
-> **Product state:** Product-definition / pre-development  
+> **Product state:** Engineering foundation in progress; synthetic local slice implemented
 > **Commercial intent:** Aspiring consumer SaaS with a later family and small-business path  
 > **Core promise:** Give Cuevaro something once. It remembers what matters, watches what changes, and brings it back when action is needed.
 
@@ -40,6 +40,8 @@ This repository is intended to be the durable source of truth for Cuevaro before
 - risks, decisions, roadmap, and release gates.
 
 Start with [00_DOCUMENT_MAP.md](00_DOCUMENT_MAP.md).
+
+Implementation has begun in the documented Expo/TypeScript/Postgres architecture. See [CURRENT_STATUS.md](CURRENT_STATUS.md), [development setup](docs/DEVELOPMENT.md), and [actual validation evidence and limits](docs/VALIDATION.md). Native hardware, managed services and commercial release gates are still open. No public application is deployed.
 
 ## Current strategic thesis
 

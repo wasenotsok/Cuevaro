@@ -2,10 +2,37 @@
 
 Status date: 2026-10-05  
 Project registry status: active  
-Implementation state: **product blueprint complete; application implementation has not started**
+Implementation state: **Phase 1 in progress; synthetic local receipt-to-lifecycle development slice verified**
 
 Current objective:
-Review the completed Cuevaro blueprint and begin Phase 1 Engineering Foundation when the Owner decides to start implementation.
+Complete the engineering foundation and the mobile-first receipt-to-lifecycle slice under the Owner's continuous development authority. The existing roadmap gates remain binding; no phase is being closed from browser or bundle evidence alone.
+
+## Implementation checkpoint — 2026-10-05
+
+Base: `main` at `33b2b6864817720ce7f720d4f2057bc28ce2f74a`. Development branch: `feat/mobile-foundation`. Firstborn and Atlas working files were not modified.
+
+Implemented locally:
+- Expo/React Native/TypeScript mobile shell, camera/library/PDF preservation paths, local state/recovery, accessible controls, dark/light palette;
+- SQLCipher-only native store with Keychain/Keystore key storage and fail-closed Expo Go refusal; browser preview uses a separate synthetic IndexedDB cache;
+- PostgreSQL household/RLS migration, private storage migration, guarded managed-auth/storage adapter seams;
+- loopback-only synthetic development API, durable embedded PostgreSQL jobs, immutable original bytes, content hashes and duplicate/idempotency checks;
+- genuine bundled local Tesseract OCR over generated receipt images, bounded text extraction, confidence/provenance, explicit consequential-fact review and contextual replies;
+- linked purchase/item/evidence/fact rows, explicit supported return/warranty dates or Unknown, deterministic in-app cues, versioned snooze/dismiss/stop controls, metadata search and original retrieval;
+- strict typechecking, automated unit/integration tests, mobile viewport browser tests, native/web bundle export and CI quality/dependency gates.
+
+Verified evidence is described in [docs/VALIDATION.md](docs/VALIDATION.md). This is a development slice, **not a finished native mobile vertical slice, production backend, calibrated AI system, or release**. The browser OCR API runs on the development computer; native automatic cloud extraction is not connected. Ordinary production mobile use must not depend on that computer.
+
+## Next safe work and external gates
+
+1. Review the draft development PR and its exact CI results; resolve available dependency fixes without weakening the gate.
+2. Approve/configure a private development managed-service environment, region and privacy path before enabling real authentication/storage or remote extraction. No provider account, credential, paid service or staging deployment was created.
+3. Produce and test native development binaries on actual Android/iOS devices; validate SQLCipher, camera quality, offline recovery, screen readers and text scaling. JavaScript/Hermes bundle export does not prove these.
+4. Calibrate quality/extraction against a legally usable representative benchmark. Geometric/occlusion/glare-region detection, unlabeled merchant layouts, multi-item receipts, PDF OCR, share-sheet/barcode, and broad provider extraction remain incomplete.
+5. Complete durable production notification delivery and real storage/auth/deletion/restore tests before later phase gates can close.
+
+Current dependency release gate is blocked by unpatched upstream `braces` and `node-forge` advisories. No waiver or public deployment is authorized by this checkpoint.
+
+Mitigation implemented: separate API dependency surface audits clean; all development servers default to localhost; no evidence is consumed as a glob, certificate or instruction. [Exact dependency paths, reachability limits and alternatives](docs/DEPENDENCY_RISK.md) are documented. The complete mobile toolchain gate remains active.
 
 ## What Cuevaro is
 
@@ -62,15 +89,15 @@ Canonical source set:
 
 ## What is NOT done
 
-No claim should be made that Cuevaro has working software yet.
+Working synthetic local software now exists. No claim should be made that Cuevaro is production-ready or that any roadmap release gate is complete.
 
-Not implemented:
-- mobile app;
-- web app;
-- backend/database;
-- AI extraction;
-- quality gate;
-- notifications;
+Still incomplete or unverified:
+- signed native mobile builds and real-device acceptance;
+- production web companion and managed backend/authentication;
+- managed storage isolation, signed URL expiry and real cloud backup;
+- production AI/provider configuration and representative extraction benchmark;
+- calibrated complete Capture Quality Gate;
+- production push notifications;
 - billing;
 - production infrastructure;
 - app-store accounts/configuration;
@@ -80,9 +107,9 @@ Not implemented:
 
 ## Next development step
 
-**Phase 1 — Engineering Foundation**
+**Phase 1 - Engineering Foundation (in progress; gate open)**
 
-First implementation work should establish:
+The local foundation now establishes these components; managed and hardware verification remain open:
 1. repository code/monorepo structure;
 2. mobile app shell;
 3. authentication and household-ready authorization;
