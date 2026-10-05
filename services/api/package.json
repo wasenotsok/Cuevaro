@@ -1,0 +1,16 @@
+{
+  "name": "@cuevaro/api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Local synthetic development API; no production deployment is configured",
+  "dependencies": {
+    "@electric-sql/pglite": "^0.3.0",
+    "@supabase/supabase-js": "^2.0.0",
+    "@tesseract.js-data/eng": "^1.0.0",
+    "fastify": "^5.0.0",
+    "sharp": "^0.35.5",
+    "tesseract.js": "^7.0.0",
+    "zod": "^4.0.0"
+  }
+}

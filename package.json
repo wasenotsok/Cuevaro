@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "services/api"
   ],
   "scripts": {
     "test": "vitest run",
@@ -12,7 +13,9 @@
     "scan": "node scripts/check-source.mjs",
     "dev:api": "tsx services/api/server.ts",
     "mobile": "npm run start -w @cuevaro/mobile",
-    "build:mobile": "npm run export -w @cuevaro/mobile"
+    "build:mobile": "npm run export -w @cuevaro/mobile",
+    "test:e2e": "playwright test",
+    "format:check": "prettier --check apps/mobile packages services tests scripts *.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.3.0",
@@ -20,19 +23,20 @@
     "@tesseract.js-data/eng": "^1.0.0",
     "fastify": "^5.0.0",
     "jpeg-js": "^0.4.4",
-    "react-native": "0.86.3",
     "sharp": "^0.35.5",
     "tesseract.js": "^7.0.0",
-    "uuid": "11.1.1",
     "zod": "^4.0.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
     "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
+    "prettier": "^3.9.9",
     "tsx": "^4.0.0",
     "typescript": "^5.9.0",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.3",
+    "react-native": "0.86.3",
+    "uuid": "11.1.1"
   },
   "overrides": {
     "react-native": "0.86.3",
