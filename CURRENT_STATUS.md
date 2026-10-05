@@ -22,6 +22,8 @@ Implemented locally:
 
 Verified evidence is described in [docs/VALIDATION.md](docs/VALIDATION.md). This is a development slice, **not a finished native mobile vertical slice, production backend, calibrated AI system, or release**. The browser OCR API runs on the development computer; native automatic cloud extraction is not connected. Ordinary production mobile use must not depend on that computer.
 
+[Draft PR #1](https://github.com/wasenotsok/Cuevaro/pull/1) is published. [Linux CI](https://github.com/wasenotsok/Cuevaro/actions/runs/37331727837) passed all implementation verification steps at `b475c5fcaf9ec3268c85aded3726b9f385f67607`; the dependency gate failed with the documented 28 high findings. No merge or deployment occurred.
+
 ## Next safe work and external gates
 
 1. Review the draft development PR and its exact CI results; resolve available dependency fixes without weakening the gate.

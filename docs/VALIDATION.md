@@ -4,6 +4,8 @@ All named canonical project documents were read before subsystem implementation.
 
 ## Completed local checks
 
+Remote evidence: [draft PR #1](https://github.com/wasenotsok/Cuevaro/pull/1), candidate `b475c5fcaf9ec3268c85aded3726b9f385f67607`, [Linux workflow 37331727837](https://github.com/wasenotsok/Cuevaro/actions/runs/37331727837). All verification steps passed (typechecking/tests, formatting, Android/iOS/web export and Chromium browser journeys). The separate dependency job failed with 28 high findings propagated from the two documented advisories. Overall CI is therefore not green. Subsequent status-only commits do not change this tested implementation.
+
 - `npm run check`: strict TypeScript, 29 unit/integration tests and source secret-pattern scan. Includes actual PostgreSQL RLS, forged managed-actor refusal, revoked/wrong-household/viewer denial, immutable evidence, duplicate hashes, idempotency, explicit review, invalid/ambiguous dates, Unknown policies, deterministic cues, optimistic reminder controls and restart recovery.
 - Actual bundled Tesseract OCR recognizes the generated receipt image; integration confirms facts into relational purchase/item/evidence/observation/assertion/lifecycle/cue rows and retrieves them through the API. Provider output is schema/evidence-bound before persistence. An injectable extractor in recovery tests is explicitly a test double; the real-OCR integration is separate.
 - `npm run build:mobile`: Android and iOS Hermes plus web bundle export. This is not an Android/iOS binary build or hardware run.
