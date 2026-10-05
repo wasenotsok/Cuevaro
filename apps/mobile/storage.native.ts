@@ -4,7 +4,7 @@ import * as Crypto from 'expo-crypto';
 import type { Draft,ConfirmedFact,Lifecycle,Cue } from '../../packages/domain/purchase';
 import type { Quality } from '../../packages/domain/quality';
 export type Capture={id:string;hash:string;mime:string;bytes:Uint8Array;createdAt:string;quality?:Quality;useAnyway?:boolean;state:'local_pending'|'review_ready'|'confirmed'|'failed';draft?:Draft;serverId?:string};
-export type RecordCache={id:string;captureId:string;facts:ConfirmedFact[];events:Lifecycle[];cues:Cue[];createdAt:string;version:number};
+export type RecordCache={id:string;captureId:string;serverCaptureId?:string;facts:ConfirmedFact[];events:Lifecycle[];cues:Cue[];createdAt:string;version:number};
 export interface LocalStore{captures():Promise<Capture[]>;saveCapture(c:Capture):Promise<void>;records():Promise<RecordCache[]>;saveRecord(r:RecordCache,c:Capture):Promise<void>}
 let opening:Promise<LocalStore>|undefined;
 export async function openStore():Promise<LocalStore>{
