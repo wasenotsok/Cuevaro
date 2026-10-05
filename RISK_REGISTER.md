@@ -1,0 +1,70 @@
+# Cuevaro — Risk Register
+
+Status: initial commercial risk register  
+Scoring: Probability (P) and Impact (I): Low / Medium / High
+
+| ID | Risk | P | I | Mitigation / design response |
+|---|---|---|---|---|
+| R-01 | Wrong return/warranty/expiry date causes user loss | M | H | provenance, jurisdiction-aware sources, deterministic calculation, strict confidence gate, unknown state |
+| R-02 | Data breach exposes receipts/documents/identity information | M | H | least privilege, RLS/authz tests, private storage, encryption, minimal logs, security review |
+| R-03 | Users distrust uploading sensitive documents | H | H | start with purchases, clear privacy UX, minimize data, on-device checks, export/delete, transparent subprocessors |
+| R-04 | Product becomes another manual database | M | H | camera/share-first, extraction, linking, minimal confirmation, measure typing/taps |
+| R-05 | Reminder delivery fails | M | H | durable server-side scheduler, retries, in-app canonical state, monitoring, idempotency |
+| R-06 | Notification fatigue causes churn | M | H | attention budget, bundling, quiet hours, lifecycle closure, useful-action rule |
+| R-07 | AI costs exceed subscription economics | M | H | quality gate before AI, caching, provider abstraction, usage tiers, unit-cost telemetry |
+| R-08 | AI silently overwrites confirmed truth | L | H | immutable provenance, user confirmation, audit history, no silent replacement |
+| R-09 | Competitors replicate visible features | H | M | focus on lifecycle graph, accumulated evidence, trust, action workflow, UX execution |
+| R-10 | Existing broad competitors already satisfy users | H | H | narrow beachhead, faster capture, stronger provenance, action assistance, validate willingness to switch |
+| R-11 | Scope expands into generic life assistant/CRM/accounting | H | H | explicit product boundary and roadmap gates |
+| R-12 | Retailer/manufacturer policies change | H | H | source freshness, checked-at date, policy versioning, invalidate/review affected rules |
+| R-13 | International rules/locales cause incorrect assumptions | H | H | jurisdiction field, local sources, no U.S.-default logic, staged market expansion |
+| R-14 | App-store subscription/policy changes | M | M | managed billing abstraction, policy monitoring, web fallback where allowed |
+| R-15 | Brand Cuevaro has later trademark conflict | M | H | formal IPOPHL/USPTO/WIPO clearance before material launch spend |
+| R-16 | Low retention because useful events are infrequent | M | H | measure lifecycle outcomes not DAU; expand adjacent high-value lifecycles only after core trust |
+| R-17 | Users lose evidence during failed upload/offline | M | H | local durable capture queue until server acknowledgment |
+| R-18 | Duplicate captures create clutter/wrong reminders | M | M | hashes, entity resolution, reversible merges, dedupe review |
+| R-19 | Quick-reply button triggers unintended consequential action | L | H | consequence-specific labels, explicit confirmation for destructive/sensitive actions |
+| R-20 | Capture-quality gate annoys users by rejecting usable images | M | M | three-state good/questionable/bad, benchmark false rejection, Use anyway on questionable |
+| R-21 | Family sharing exposes private records to wrong member | M | H | household roles, explicit sharing, audit, revoke, sensitive-item rules |
+| R-22 | Account takeover exposes vault | M | H | secure auth, MFA/passkeys roadmap, device/session management, biometrics locally |
+| R-23 | Third-party vendor lock-in | M | M | provider interfaces, standard Postgres/data export, no vendor objects in domain |
+| R-24 | Support staff over-access sensitive content | L | H | restricted support tooling, audit, least privilege, content access only when needed |
+| R-25 | Deletion promises do not match backups/providers | M | H | documented retention, subprocessor contracts, deletion tests |
+| R-26 | Policy/web lookup content injects malicious model instructions | M | H | treat external content as untrusted data, schema extraction, prompt-injection tests |
+| R-27 | User treats Cuevaro as legal/insurance authority | M | H | wording, source display, disclaimers, never adjudicate eligibility |
+| R-28 | Overengineering delays validation | H | M | managed services, monolith+worker, phase gates, no premature microservices |
+| R-29 | No real iOS/Android device testing | M | H | physical device matrix before beta |
+| R-30 | Public repo accidentally receives secrets/private data | M | H | secret scanning, .gitignore, fixture policy, CI checks |
+
+## Top launch risks
+
+The five risks that should dominate early product decisions:
+
+1. **Trust/privacy** — users will not give Cuevaro meaningful evidence if the product feels unsafe.
+2. **False confidence** — one confidently wrong deadline can destroy trust.
+3. **Manual burden** — if the user has to maintain another database, Cuevaro loses its reason to exist.
+4. **Reminder reliability** — lifecycle intelligence is worthless if the future cue does not arrive.
+5. **Differentiation** — storing receipts/warranties/reminders is already commoditized.
+
+## Risk review cadence
+
+- review at each roadmap phase gate;
+- add risks from beta/support data;
+- close only with evidence, not optimism;
+- any new feature touching identity, payments, sharing, or automated external action requires threat/risk review.
+
+## Explicit product boundary used as risk control
+
+Cuevaro V1 is not:
+- accounting software;
+- a bank/financial aggregation product;
+- a generic calendar/to-do app;
+- a CRM;
+- a general autonomous agent;
+- legal advice;
+- an insurer/warranty adjudicator;
+- a marketplace;
+- a password manager;
+- a complete document management suite.
+
+Keeping this boundary protects time, security, and comprehension.
