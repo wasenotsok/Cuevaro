@@ -41,6 +41,8 @@ Scoring: Probability (P) and Impact (I): Low / Medium / High
 
 ## Top launch risks
 
+2026-10-06 synthetic evidence for R-01/R-17/R-18/R-32: ordered multi-page originals, atomic assembly failure and lost-acknowledgement restart are now covered, with independent deduplication/revocation/rebinding fixes. Generated glare still produced a wrong low-confidence merchant; review and Unknown remain necessary. This reduces specific development gaps without closing camera calibration, native storage, managed upgrade or release risks. See docs/VALIDATION.md and docs/INDEPENDENT_REVIEW.md.
+
 The five risks that should dominate early product decisions:
 
 1. **Trust/privacy** — users will not give Cuevaro meaningful evidence if the product feels unsafe.
