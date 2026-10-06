@@ -42,14 +42,31 @@ const observation = z
       .optional(),
   })
   .strict();
+export const itemCandidateSchema = z
+  .object({
+    id: z.string().min(1).max(250),
+    observation: observation.extend({
+      field: z.literal("item"),
+      value: z.string().trim().min(1).max(200),
+    }),
+  })
+  .strict();
+export type ItemCandidate = z.infer<typeof itemCandidateSchema>;
 export const draftSchema = z
   .object({
     observations: z.array(observation).max(7),
+    itemCandidates: z.array(itemCandidateSchema).min(2).max(20).optional(),
     provider: z.string(),
     version: z.string(),
   })
   .strict()
   .superRefine((v, ctx) => {
+    if (
+      v.itemCandidates &&
+      new Set(v.itemCandidates.map((c) => c.id)).size !==
+        v.itemCandidates.length
+    )
+      ctx.addIssue({ code: "custom", message: "Duplicate item candidates" });
     if (
       new Set(v.observations.map((o) => o.field)).size !== v.observations.length
     )
@@ -195,6 +212,28 @@ export function extractText(
   }
   return draftSchema.parse({
     observations: result,
+    ...(lines.filter((line) => /^(?:Item|Product)\s*:\s*(.+)$/i.test(line))
+      .length > 1
+      ? {
+          itemCandidates: lines.flatMap((line, i) => {
+            const m = /^(?:Item|Product)\s*:\s*(.+)$/i.exec(line);
+            return m && validValue("item", m[1])
+              ? [
+                  {
+                    id: `${evidenceId}:item:${i}`,
+                    observation: {
+                      ...result[fields.indexOf("item")],
+                      value: m[1],
+                      confidence: "low",
+                      excerpt: line.slice(0, 400),
+                      reason: "requires_item_review",
+                    },
+                  },
+                ]
+              : [];
+          }),
+        }
+      : {}),
     provider: "local-text-parser",
     version: "receipt-text-v3",
   });

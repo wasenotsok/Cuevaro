@@ -9,6 +9,10 @@ import {
 } from "../../packages/domain/capture-pages";
 import { mergePageDrafts } from "../../packages/domain/merge-pages";
 import {
+  reviewItems,
+  type ItemChoice,
+} from "../../packages/domain/review-items";
+import {
   authorize,
   type Actor,
   type Membership,
@@ -69,6 +73,13 @@ export async function openDevelopmentDb(path?: string) {
         "supabase/migrations/202610060004_evidence_pages.sql",
         "utf8",
       ),
+    );
+  const itemColumn = await db.query(
+    "select column_name from information_schema.columns where table_schema='public' and table_name='fact_assertions' and column_name='item_id'",
+  );
+  if (!itemColumn.rows.length)
+    await db.exec(
+      readFileSync("supabase/migrations/202610060005_item_facts.sql", "utf8"),
     );
   return db;
 }
@@ -282,7 +293,10 @@ export async function runOneJob(db: PGlite, extract = extractOriginal) {
         ),
       );
       if (
-        d.observations.some(
+        [
+          ...d.observations,
+          ...(d.itemCandidates?.map((c) => c.observation) ?? []),
+        ].some(
           (o) =>
             o.evidenceId !== page.id ||
             o.sources?.some((s) => s.evidenceId !== page.id),
@@ -301,7 +315,10 @@ export async function runOneJob(db: PGlite, extract = extractOriginal) {
           );
     const ids = new Set(rows.map((r) => r.id));
     if (
-      draft.observations.some(
+      [
+        ...draft.observations,
+        ...(draft.itemCandidates?.map((c) => c.observation) ?? []),
+      ].some(
         (o) =>
           !ids.has(o.evidenceId) ||
           o.sources?.some((s) => !ids.has(s.evidenceId)),
@@ -380,6 +397,7 @@ export async function confirmPurchase(
   actor: Actor,
   captureId: string,
   values: Partial<Record<Field, string | null>>,
+  itemChoices?: ItemChoice[],
 ) {
   await assertActor(db, actor, true);
   return db.transaction(async (tx) => {
@@ -404,18 +422,16 @@ export async function confirmPurchase(
     const now = new Date().toISOString(),
       facts = confirm(row.draft, values, actor.userId, now, randomUUID),
       id = randomUUID();
+    const items = reviewItems(
+      row.draft,
+      itemChoices,
+      values.item ?? null,
+      randomUUID,
+    );
     const result = derive(facts, row.timezone, id);
     await tx.query(
       `insert into purchases(id,household_id,capture_id) values($1,$2,$3)`,
       [id, actor.householdId, captureId],
-    );
-    await tx.query(
-      `insert into items(household_id,purchase_id,display_name) values($1,$2,$3)`,
-      [
-        actor.householdId,
-        id,
-        facts.find((f) => f.field === "item")?.value ?? "Purchase",
-      ],
     );
     for (const f of facts) {
       const oid = randomUUID();
@@ -452,6 +468,46 @@ export async function confirmPurchase(
         ],
       );
     }
+    for (const item of items) {
+      await tx.query(
+        `insert into items(id,household_id,purchase_id,display_name) values($1,$2,$3,$4)`,
+        [item.id, actor.householdId, id, item.name],
+      );
+      const oid = randomUUID(),
+        o = item.observation;
+      await tx.query(
+        `insert into observations(id,household_id,evidence_id,field_name,value,confidence,source_locator) values($1,$2,$3,'item',$4,$5,$6)`,
+        [
+          oid,
+          actor.householdId,
+          o.evidenceId,
+          JSON.stringify(o.value),
+          o.confidence,
+          JSON.stringify({
+            excerpt: o.excerpt,
+            source: o.source,
+            version: o.version,
+            reason: o.reason,
+            pages: o.pages,
+            sources: o.sources,
+            candidateId: item.candidateId,
+          }),
+        ],
+      );
+      await tx.query(
+        `insert into fact_assertions(id,household_id,purchase_id,item_id,field_name,value,authority_type,source_observation_id,confirmed_by_user_id) values($1,$2,$3,$4,'item',$5,$6,$7,$8)`,
+        [
+          randomUUID(),
+          actor.householdId,
+          id,
+          item.id,
+          JSON.stringify(item.name),
+          item.authority,
+          oid,
+          actor.userId,
+        ],
+      );
+    }
     for (const e of result.events) {
       const eid = randomUUID();
       await tx.query(
@@ -481,7 +537,15 @@ export async function confirmPurchase(
       `insert into audit_events(household_id,actor_id,event_type,entity_id,correlation_id) values($1,$2,'purchase_confirmed',$3,$4)`,
       [actor.householdId, actor.userId, id, randomUUID()],
     );
-    return { id, captureId, facts, ...result, createdAt: now, version: 1 };
+    return {
+      id,
+      captureId,
+      facts,
+      items,
+      ...result,
+      createdAt: now,
+      version: 1,
+    };
   });
 }
 export async function changeAttention(

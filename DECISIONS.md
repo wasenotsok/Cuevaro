@@ -204,3 +204,9 @@ Version receipt-text-v3 accepts explicit alternate labels, the unambiguous peso 
 **Date:** 2026-10-06
 
 One receipt can contain up to ten distinct photos with a 20 MB aggregate byte limit. Preserve each original before decoding; append/replace links are atomic and keep earlier originals. Any Bad page blocks extraction; Questionable requires explicit continuation. Seal the ordered SHA-256 manifest before the first upload attempt, including failed acknowledgement, so retries cannot change an in-flight receipt. Reject already sealed/uploaded/drafted pages as new attachments. Extract pages sequentially with authorization revalidation before each; bind sources to actual immutable evidence IDs and page numbers. Conflicting/invalid consequential facts remain Unknown, and one explicit confirmation creates one lifecycle. Migration 004 adds page ordering without altering existing original bytes; no live application is inferred.
+
+## D-026 - Explicit reviewed items with shared receipt evidence
+**Status:** Limited labeled synthetic implementation; broader extraction open
+**Date:** 2026-10-06
+
+Up to twenty explicit labeled item candidates require individual track/skip review. Repeated names remain separate uncertain candidates; do not infer quantity or merge them automatically. Corrected names preserve original observations, evidence/page provenance and authority type. Reuse items and fact_assertions with scoped item links rather than competing storage; enforce same purchase/household/item/field history and one successor. Shared receipt deadlines do not establish item-specific coverage. Unlabeled purchase-line extraction and quantities/prices remain future V1 work.

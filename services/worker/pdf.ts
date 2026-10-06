@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
+import { draftItems } from "../../packages/domain/review-items";
 import {
   extractText,
   draftSchema,
@@ -92,9 +93,21 @@ export async function extractPdf(
   const drafts = pages.map((text) =>
     extractText(text, evidenceId, "questionable", today),
   );
+  const items = drafts.flatMap((d, i) =>
+    draftItems(d).map((c) => ({
+      ...c,
+      id: `${c.id}:pdf:${i + 1}`,
+      observation: {
+        ...c.observation,
+        pages: [i + 1],
+        sources: [{ evidenceId, page: i + 1, excerpt: c.observation.excerpt }],
+      },
+    })),
+  );
   return draftSchema.parse({
     provider: "pdfjs-local-text",
     version: "pdfjs-6+receipt-text-v3",
+    ...(items.length > 1 ? { itemCandidates: items } : {}),
     observations: fields.map((field) => {
       const observed = drafts.map((d) =>
         d.observations.find((o) => o.field === field)!,

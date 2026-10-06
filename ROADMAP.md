@@ -104,6 +104,8 @@ Local contribution, 2026-10-05: bundled local OCR over synthetic labeled receipt
 
 Independent contribution, 2026-10-06: explicit Seller/Sold by/Product/Amount due labels, peso-symbol currency and unambiguous named/year-first/numeric dates are supported with raw excerpts and conservative conflicts. Two additional synthetic layouts passed actual Tesseract checks. Unlabeled merchant inference, ambiguous numeric dates, multi-item review and representative calibration remain open; no phase gate is closed.
 
+Multi-item contribution, 2026-10-06: repeated explicit Item/Product labels become distinct low-confidence candidates with per-page evidence. Every candidate requires track/skip review; corrected names retain original provenance. One receipt/lifecycle links multiple item assertions. Duplicate names are surfaced rather than automatically merged, and per-item coverage/quantities/prices remain unsupported. Local tests and narrow-mobile visual inspection cover this limited labeled flow, not representative multi-item extraction acceptance. Correction/rescheduling history remains next.
+
 Goal: turn evidence into a trustworthy useful record.
 
 Scope:

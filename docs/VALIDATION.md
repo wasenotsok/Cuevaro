@@ -77,6 +77,12 @@ Observed Windows run: six extracted and five quality-blocked; crisp/duplicate ma
 
 An additional in-memory legacy-schema regression reconstructs pre-004 ordering, applies the actual forward migration and preserves original ID/hash/bytes exactly. Duplicate/out-of-range page positions fail and own/foreign tenant reads remain isolated. This is not a live Supabase upgrade/backup/restore test. The expanded local suite passed 66 tests across twelve files, strict typechecking/source scan and formatting. App runtime is unchanged from the previously verified multi-page bundle and eleven browser journeys. Independent read-only review found no actionable defect and confirmed these evidence limits.
 
+## Multi-item review checkpoint - 2026-10-06
+
+Actual Tesseract over a generated two-item receipt, embedded-text PDF and photo-page merging produce bounded labeled candidates. Every candidate requires an explicit track/skip choice; duplicates/foreign/missing decisions are rejected, skipped items create no item row and corrections retain original evidence. Two tracked names persist through the relational API and search/reload with a single receipt-level lifecycle. Item-specific coverage, line prices and quantities are not inferred.
+
+Local suite: 69 tests/thirteen files, twelve browser journeys, strict typechecking/source scan, formatting and Android/iOS/web exports passed. The 320px dark mobile review screenshot was visually inspected: readable source excerpts, correction fields and wrapping consequence-specific track/skip controls without horizontal overflow. Lost confirmation response recovers only matching candidate IDs/reviewed names; reload/search retrieves the same purchase. Independent review identified same-household cross-purchase linkage weakness. Forward migration 005 now binds item links to purchase and history links to purchase/field/item scope, with a single successor. Regressions reject cross-purchase items/history and cross-field history. Live managed migration/native acceptance and representative extraction remain unverified.
+
 ## Reproduction
 
 `npm ci && npm run check && npm run build:mobile`

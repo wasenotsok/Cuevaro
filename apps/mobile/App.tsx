@@ -21,6 +21,10 @@ import {
 } from "./storage";
 import { pick, preserve, inspect, cleanupCaptureCache } from "./capture";
 import { capturePages, assemblePage } from "./pages";
+import {
+  reviewItems,
+  type ItemChoice,
+} from "../../packages/domain/review-items";
 import { copy } from "./strings";
 import {
   extractText,
@@ -106,6 +110,8 @@ export default function App() {
     [draft, setDraft] = useState<Draft>(),
     [values, setValues] = useState<Partial<Record<Field, string | null>>>({}),
     [checked, setChecked] = useState<Set<Field>>(new Set()),
+    [itemChoices, setItemChoices] = useState<ItemChoice[]>([]),
+    [itemChecked, setItemChecked] = useState<Set<string>>(new Set()),
     [search, setSearch] = useState(""),
     [selected, setSelected] = useState<RecordCache>(),
     [busy, setBusy] = useState(false),
@@ -138,6 +144,13 @@ export default function App() {
       Object.fromEntries(d.observations.map((o) => [o.field, o.value])),
     );
     setChecked(new Set());
+    setItemChoices(
+      d.itemCandidates?.map((c) => ({
+        candidateId: c.id,
+        name: c.observation.value,
+      })) ?? [],
+    );
+    setItemChecked(new Set());
   };
   async function receive(bytes: Uint8Array, mime: string, uri: string) {
     if (!store) return;
@@ -404,18 +417,35 @@ export default function App() {
       )
         throw Error("Confirm each consequential value or choose Keep unknown.");
       let record: RecordCache;
+      const reviewedItems = reviewItems(
+        draft,
+        draft.itemCandidates ? itemChoices : undefined,
+        values.item ?? null,
+        Crypto.randomUUID,
+      );
+      if (draft.itemCandidates?.some((c) => !itemChecked.has(c.id)))
+        throw Error("Confirm or skip each item before saving.");
       if (capture.serverId && draft.provider !== "local-text-parser") {
         try {
           record = await request(
             `/v1/captures/${capture.serverId}/confirm`,
-            values,
+            draft.itemCandidates ? { values, itemChoices } : values,
           );
         } catch (e) {
           const saved: RecordCache[] = await request("/v1/records");
           const existing = saved.find(
             (r) =>
               r.captureId === capture.serverId &&
-              r.facts.every((f) => f.value === values[f.field]),
+              r.facts.every((f) => f.value === values[f.field]) &&
+              (!draft.itemCandidates ||
+                (r.items?.length === reviewedItems.length &&
+                  reviewedItems.every((i) =>
+                    r.items?.some(
+                      (saved) =>
+                        saved.candidateId === i.candidateId &&
+                        saved.name === i.name,
+                    ),
+                  ))),
           );
           if (!existing) throw e;
           record = existing;
@@ -434,6 +464,7 @@ export default function App() {
           id,
           captureId: capture.id,
           facts,
+          items: reviewedItems,
           ...derive(facts, "Asia/Manila", id),
           createdAt: now,
           version: 1,
@@ -601,8 +632,12 @@ export default function App() {
     evidenceUri = original?.mime.startsWith("image/")
       ? `data:${original.mime};base64,${bytes64(original.bytes)}`
       : undefined;
-  const filtered = records.filter((r) =>
-    r.facts.some((f) => f.value?.toLowerCase().includes(search.toLowerCase())),
+  const filtered = records.filter(
+    (r) =>
+      r.facts.some((f) =>
+        f.value?.toLowerCase().includes(search.toLowerCase()),
+      ) ||
+      r.items?.some((i) => i.name.toLowerCase().includes(search.toLowerCase())),
   );
   const cues = records.flatMap((r) =>
     r.cues
@@ -914,71 +949,152 @@ export default function App() {
               {text(
                 "Correct what is uncertain. Unsupported return or warranty dates stay Unknown. No retailer policy is assumed.",
               )}
-              {draft.observations.map((o) => (
-                <View key={o.field} style={styles.fact}>
-                  <Text style={[styles.subtitle, { color: p.text }]}>
-                    {labels[o.field]} ·{" "}
-                    {values[o.field] === null
-                      ? "Unknown"
-                      : checked.has(o.field)
-                        ? "Reviewed"
-                        : "Needs review"}
-                  </Text>
-                  <TextInput
-                    accessibilityLabel={labels[o.field]}
-                    placeholder={copy.unknown}
-                    placeholderTextColor={p.muted}
-                    value={values[o.field] ?? ""}
-                    onChangeText={(v) => {
-                      setValues({ ...values, [o.field]: v.trim() ? v : null });
-                      const c = new Set(checked);
-                      c.delete(o.field);
-                      setChecked(c);
-                    }}
-                    style={[
-                      styles.input,
-                      { color: p.text, borderColor: p.muted },
-                    ]}
-                    keyboardType={
-                      o.field === "total" ? "decimal-pad" : "default"
-                    }
-                  />
+              {draft.itemCandidates ? (
+                <>
+                  {title("Items to track")}
                   {text(
-                    o.excerpt
-                      ? `Receipt${o.pages?.length ? ` (${originalRoot?.mime === "application/pdf" ? "PDF " : ""}page ${o.pages.join(", ")})` : ""}: "${o.excerpt}"`
-                      : "No supporting text found.",
+                    "Confirm or skip each labeled item. Repeated names may be duplicate evidence. Receipt-level dates do not prove coverage for every item.",
                   )}
-                  {text(
-                    `Extraction confidence: ${o.confidence}. ${o.reason === "missing" ? "Not found in evidence." : o.reason === "ambiguous_or_invalid_date" ? "Date is ambiguous or invalid; keep unknown unless verified." : "Verify this value against the original."}`,
-                  )}
-                  {consequential.has(o.field) ? (
-                    <View style={styles.row}>
-                      <Button
-                        label={
-                          o.field === "warrantyDate"
-                            ? "Track warranty"
-                            : `Confirm ${labels[o.field].toLowerCase()}`
+                  {draft.itemCandidates.map((candidate, i) => (
+                    <View key={candidate.id} style={styles.fact}>
+                      {text(
+                        `Item ${i + 1} — ${itemChecked.has(candidate.id) ? "Reviewed" : "Needs review"}`,
+                      )}
+                      <TextInput
+                        accessibilityLabel={`Item ${i + 1} name`}
+                        value={
+                          itemChoices.find(
+                            (c) => c.candidateId === candidate.id,
+                          )?.name ?? ""
                         }
-                        disabled={!values[o.field]}
-                        onPress={() =>
-                          setChecked(new Set([...checked, o.field]))
-                        }
-                      />
-                      <Button
-                        label={
-                          o.field === "warrantyDate"
-                            ? "Don't track warranty"
-                            : "Keep unknown"
-                        }
-                        onPress={() => {
-                          setValues({ ...values, [o.field]: null });
-                          setChecked(new Set([...checked, o.field]));
+                        onChangeText={(name) => {
+                          setItemChoices(
+                            itemChoices.map((c) =>
+                              c.candidateId === candidate.id
+                                ? { ...c, name: name.trim() ? name : null }
+                                : c,
+                            ),
+                          );
+                          setItemChecked(
+                            new Set(
+                              [...itemChecked].filter(
+                                (id) => id !== candidate.id,
+                              ),
+                            ),
+                          );
                         }}
+                        style={[
+                          styles.input,
+                          { color: p.text, borderColor: p.muted },
+                        ]}
                       />
+                      {text(
+                        `Receipt${candidate.observation.pages?.length ? ` (page ${candidate.observation.pages.join(", ")})` : ""}: "${candidate.observation.excerpt}" — low confidence`,
+                      )}
+                      <View style={styles.row}>
+                        <Button
+                          label={`Track item ${i + 1}`}
+                          disabled={
+                            !itemChoices.find(
+                              (c) => c.candidateId === candidate.id,
+                            )?.name
+                          }
+                          onPress={() =>
+                            setItemChecked(
+                              new Set([...itemChecked, candidate.id]),
+                            )
+                          }
+                        />
+                        <Button
+                          label={`Skip item ${i + 1}`}
+                          onPress={() => {
+                            setItemChoices(
+                              itemChoices.map((c) =>
+                                c.candidateId === candidate.id
+                                  ? { ...c, name: null }
+                                  : c,
+                              ),
+                            );
+                            setItemChecked(
+                              new Set([...itemChecked, candidate.id]),
+                            );
+                          }}
+                        />
+                      </View>
                     </View>
-                  ) : null}
-                </View>
-              ))}
+                  ))}
+                </>
+              ) : null}
+              {draft.observations
+                .filter((o) => !draft.itemCandidates || o.field !== "item")
+                .map((o) => (
+                  <View key={o.field} style={styles.fact}>
+                    <Text style={[styles.subtitle, { color: p.text }]}>
+                      {labels[o.field]} ·{" "}
+                      {values[o.field] === null
+                        ? "Unknown"
+                        : checked.has(o.field)
+                          ? "Reviewed"
+                          : "Needs review"}
+                    </Text>
+                    <TextInput
+                      accessibilityLabel={labels[o.field]}
+                      placeholder={copy.unknown}
+                      placeholderTextColor={p.muted}
+                      value={values[o.field] ?? ""}
+                      onChangeText={(v) => {
+                        setValues({
+                          ...values,
+                          [o.field]: v.trim() ? v : null,
+                        });
+                        const c = new Set(checked);
+                        c.delete(o.field);
+                        setChecked(c);
+                      }}
+                      style={[
+                        styles.input,
+                        { color: p.text, borderColor: p.muted },
+                      ]}
+                      keyboardType={
+                        o.field === "total" ? "decimal-pad" : "default"
+                      }
+                    />
+                    {text(
+                      o.excerpt
+                        ? `Receipt${o.pages?.length ? ` (${originalRoot?.mime === "application/pdf" ? "PDF " : ""}page ${o.pages.join(", ")})` : ""}: "${o.excerpt}"`
+                        : "No supporting text found.",
+                    )}
+                    {text(
+                      `Extraction confidence: ${o.confidence}. ${o.reason === "missing" ? "Not found in evidence." : o.reason === "ambiguous_or_invalid_date" ? "Date is ambiguous or invalid; keep unknown unless verified." : "Verify this value against the original."}`,
+                    )}
+                    {consequential.has(o.field) ? (
+                      <View style={styles.row}>
+                        <Button
+                          label={
+                            o.field === "warrantyDate"
+                              ? "Track warranty"
+                              : `Confirm ${labels[o.field].toLowerCase()}`
+                          }
+                          disabled={!values[o.field]}
+                          onPress={() =>
+                            setChecked(new Set([...checked, o.field]))
+                          }
+                        />
+                        <Button
+                          label={
+                            o.field === "warrantyDate"
+                              ? "Don't track warranty"
+                              : "Keep unknown"
+                          }
+                          onPress={() => {
+                            setValues({ ...values, [o.field]: null });
+                            setChecked(new Set([...checked, o.field]));
+                          }}
+                        />
+                      </View>
+                    ) : null}
+                  </View>
+                ))}
               <Button label={copy.save} primary onPress={save} />
             </>,
           )}
@@ -990,6 +1106,24 @@ export default function App() {
                   "Purchase",
               )}
               {text(copy.local)}
+              {selected.items?.some(
+                (item) => item.candidateId !== "single-item",
+              ) ? (
+                <>
+                  {title("Tracked items")}
+                  {selected.items.map((item) => (
+                    <View key={item.id}>
+                      {text(item.name)}
+                      {text(
+                        `${item.authority === "user_entered" ? "Corrected by you" : "Confirmed by you"} — ${item.observation.excerpt}`,
+                      )}
+                    </View>
+                  ))}
+                  {text(
+                    "Dates below belong to this receipt. Item-specific warranty coverage remains unverified.",
+                  )}
+                </>
+              ) : null}
               {selected.facts.map((f) => (
                 <View key={f.id} style={styles.fact}>
                   <Text style={[styles.subtitle, { color: p.text }]}>

@@ -8,6 +8,7 @@ import type {
   Cue,
 } from "../../packages/domain/purchase";
 import type { Quality } from "../../packages/domain/quality";
+import type { ReviewedItem } from "../../packages/domain/review-items";
 export type Capture = {
   id: string;
   hash: string;
@@ -31,6 +32,8 @@ export type RecordCache = {
   captureId: string;
   serverCaptureId?: string;
   facts: ConfirmedFact[];
+  items?: ReviewedItem[];
+  history?: ConfirmedFact[];
   events: Lifecycle[];
   cues: Cue[];
   createdAt: string;

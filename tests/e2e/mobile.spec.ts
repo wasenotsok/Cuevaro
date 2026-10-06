@@ -2,6 +2,80 @@ import { test, expect } from "@playwright/test";
 import sharp from "sharp";
 import { readFileSync } from "node:fs";
 import { syntheticPdf } from "../../packages/test-fixtures/pdf";
+test("multi-item review requires explicit choices and preserves corrected names and sources after lost response/reload", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.goto("/");
+  await page
+    .getByRole("button", { name: "Open synthetic development preview" })
+    .click();
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Choose photo", exact: true }).click();
+  await (await chooser).setFiles(".local/multi-item/receipt.png");
+  await page.getByRole("button", { name: "Use anyway", exact: true }).click();
+  await expect(page.getByLabel("Item 1 name", { exact: true })).toHaveValue(
+    "Electric kettle",
+    { timeout: 60000 },
+  );
+  await expect(page.getByLabel("Item 2 name", { exact: true })).toHaveValue(
+    "Synthetic toaster",
+  );
+  await page.getByLabel("Item 1 name", { exact: true }).fill("Reviewed kettle");
+  for (const name of [
+    "Confirm purchase date",
+    "Confirm total",
+    "Confirm return deadline",
+    "Track warranty",
+  ])
+    await page.getByRole("button", { name, exact: true }).click();
+  await page.getByRole("button", { name: "Save purchase & cues" }).click();
+  await expect(
+    page.getByText("Confirm or skip each item before saving.", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Track item 1", exact: true }).click();
+  await page.getByRole("button", { name: "Track item 2", exact: true }).click();
+  await page
+    .getByLabel("Item 1 name", { exact: true })
+    .scrollIntoViewIfNeeded();
+  await page.screenshot({ path: ".local/multi-item/review-mobile.png" });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.route("**/confirm", async (route) => {
+    await route.fetch();
+    await route.abort();
+  });
+  await page.getByRole("button", { name: "Save purchase & cues" }).click();
+  await expect(page.getByText("Tracked items", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Reviewed kettle", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Synthetic toaster", { exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Open synthetic development preview" })
+    .click();
+  await page.getByRole("button", { name: "Things", exact: true }).click();
+  await page.getByLabel("Search saved purchases").fill("Reviewed kettle");
+  await expect(
+    page.getByRole("button", { name: "Open saved purchase", exact: true }),
+  ).toHaveCount(1);
+  await page
+    .getByRole("button", { name: "Open saved purchase", exact: true })
+    .click();
+  await expect(
+    page.getByText("Corrected by you — Item: Electric kettle", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/Item-specific warranty coverage remains unverified/),
+  ).toBeVisible();
+});
 test("multi-page receipt survives bad-page replacement, lost upload acknowledgement and restart with exact originals", async ({
   page,
 }) => {

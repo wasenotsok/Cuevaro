@@ -1,3 +1,4 @@
+import { getRecords } from "./records";
 import Fastify from "fastify";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
@@ -15,6 +16,7 @@ import {
   changeAttention,
 } from "./development";
 import { fields } from "../../packages/domain/purchase";
+import { itemChoicesSchema } from "../../packages/domain/review-items";
 import { syntheticReceiptSvg } from "../../packages/test-fixtures/receipt";
 const body = z
   .object({
@@ -144,13 +146,19 @@ export async function buildApi(
   );
   app.post<{ Params: { id: string } }>(
     "/v1/captures/:id/confirm",
-    async (req) =>
-      confirmPurchase(
+    async (req) => {
+      const b = z
+        .object({ values, itemChoices: itemChoicesSchema })
+        .strict()
+        .safeParse(req.body);
+      return confirmPurchase(
         db,
         developmentActor,
         z.uuid().parse(req.params.id),
-        values.parse(req.body),
-      ),
+        b.success ? b.data.values : values.parse(req.body),
+        b.success ? b.data.itemChoices : undefined,
+      );
+    },
   );
   app.post<{ Params: { id: string } }>(
     "/v1/purchases/:id/attention",
@@ -165,46 +173,7 @@ export async function buildApi(
       );
     },
   );
-  app.get("/v1/records", async () => {
-    await assertActor(db, developmentActor);
-    const purchases = (
-      await db.query<{
-        id: string;
-        capture_id: string;
-        version: number;
-        created_at: string;
-      }>(
-        `select * from purchases where household_id=$1 order by created_at desc limit 100`,
-        [developmentActor.householdId],
-      )
-    ).rows;
-    return Promise.all(
-      purchases.map(async (p) => ({
-        id: p.id,
-        captureId: p.capture_id,
-        version: p.version,
-        createdAt: p.created_at,
-        facts: (
-          await db.query(
-            `select f.id,f.field_name as field,f.value,f.authority_type as authority,f.confirmed_by_user_id as "actorId",f.confirmed_at as "confirmedAt",json_build_object('field',o.field_name,'value',o.value,'confidence',o.confidence,'evidenceId',o.evidence_id,'excerpt',o.source_locator->>'excerpt','source',o.source_locator->>'source','version',o.source_locator->>'version','reason',coalesce(o.source_locator->>'reason','requires_review'))::jsonb || case when o.source_locator ? 'pages' then jsonb_build_object('pages',o.source_locator->'pages') else '{}'::jsonb end || case when o.source_locator ? 'sources' then jsonb_build_object('sources',o.source_locator->'sources') else '{}'::jsonb end as observation from fact_assertions f join observations o on o.id=f.source_observation_id where f.purchase_id=$1 and f.household_id=$2`,
-            [p.id, developmentActor.householdId],
-          )
-        ).rows,
-        events: (
-          await db.query(
-            `select kind,status,due_date::text as "dueDate",timezone,source_fact_ids as "sourceFactIds",rule_version as "ruleVersion" from lifecycle_events where purchase_id=$1 and household_id=$2`,
-            [p.id, developmentActor.householdId],
-          )
-        ).rows,
-        cues: (
-          await db.query(
-            `select c.idempotency_key as id,e.kind,c.scheduled_for::text as "scheduledFor",e.due_date::text as "dueDate",c.state from cues c join lifecycle_events e on e.id=c.event_id where e.purchase_id=$1 and c.household_id=$2`,
-            [p.id, developmentActor.householdId],
-          )
-        ).rows,
-      })),
-    );
-  });
+  app.get("/v1/records", () => getRecords(db, developmentActor));
   return app;
 }
 if (process.argv[1]?.endsWith("server.ts")) {

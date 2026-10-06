@@ -36,3 +36,7 @@ Reviewer found three defects: assembly changed the root hash and broke first-ori
 ## Synthetic evaluation and legacy migration review - 2026-10-06
 
 No actionable defect found. Review confirmed real quality/OCR execution, visible skips/wrong candidates and conservative Unknown checks. Zero high-confidence errors is the enforced confidence-cap regression, not statistical calibration; the duplicate evaluation measures hashes/OCR rather than storage deduplication. Migration coverage is reconstructed in-memory legacy schema with exact original preservation, constraints and tenant reads, not live provider/restore evidence.
+
+## Multi-item review - 2026-10-06
+
+No active client authorization bypass found. Confirmation binds reviewed candidate IDs/names and actual source evidence, including lost-response matching. Reviewer found same-household cross-purchase item/supersedes links permitted by the initial migration. Repair binds item assertions to purchase/household, supersedes to purchase/field/item scope and enforces one successor; cross-purchase and cross-field regressions pass. Independent follow-up confirmed the repair and found no further issue. Managed migration and physical native acceptance remain open.
