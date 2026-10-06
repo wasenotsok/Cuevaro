@@ -44,3 +44,7 @@ No active client authorization bypass found. Confirmation binds reviewed candida
 ## Correction/history review - 2026-10-06
 
 Reviewer reproduced loss of dismissal/snooze after deadline -> Unknown -> restoration. Durable versioned cue intent now survives cancellation and is selected per reminder offset; domain and PostgreSQL regressions cover the repair. Stop remains preserved. Follow-up confirmed the repair and transactional response snapshots with no remaining actionable defect. Read-only review does not establish native or managed-provider acceptance.
+
+## Private export/restore review - 2026-10-06
+
+Initial inner join could omit a missing page byte row and still export the remainder. Repaired with a left join/missing-byte refusal, full ordered capture-hash verification and contiguous pages. Partial loss/changed-manifest regressions cover it; follow-up found no further actionable defect. Tenant scoping, snapshots, UUID filenames, exclusive files and separate byte verification were assessed. Restore evidence is actual local PGlite dump/load, not managed-provider recovery.

@@ -96,3 +96,15 @@ Confirmed fields and tracked names now support explicit corrections with immutab
 Mobile correction commands are saved before upload. Offline/lost-response edits show a queued draft while displaying last confirmed facts, support replay after restart and require a successful fresh read to discard the queue. Mutation responses and record reads use transactional snapshots. Synthetic PostgreSQL integration and mobile browser evidence remain development-only; migration 006 has not been applied to Supabase. Phase 1 remains open.
 
 Correction checkpoint verification: 73 unit/integration tests across fourteen files, all thirteen browser journeys, strict typechecking, formatting, source scan and Android/iOS/web exports passed. The mobile history screenshot was visually inspected for readable earlier/current facts and retained original sources. Test receipts are isolated to prevent shared-record contamination; no native-device claim.
+
+Correction head `4217db02b805a5675f90a0e7d4a124075aebf188` passed implementation verification in [exact CI 37458845546](https://github.com/wasenotsok/Cuevaro/actions/runs/37458845546); the dependency gate failed. Later contributions require separate head verification.
+
+## Private development export and restore drill - 2026-10-06
+
+`services/api/export.ts` exports one authorized purchase from a transactional snapshot, including current facts, immutable main/item history, sources, lifecycle and cue intent. Separate original files carry UUID filenames, MIME/page/size/SHA metadata; absent or corrupt bytes, a changed ordered capture hash or noncontiguous pages fail closed. Export audits contain actor/entity/correlation metadata, not receipt text. Viewer read access follows existing household policy; revoked/foreign access is refused.
+
+`node --import tsx scripts/export-development-record.ts <purchase-uuid>` reads the synthetic `.local/database` and writes a fresh `.local/exports/<uuid>/record.json` plus `originals/`, exclusively creating files and rechecking every file hash. It is a developer tool, not ordinary native export UX. JSON format `cuevaro-record-export-v1` has environment/creation metadata, a record and original-file manifest; files retain exact original bytes. Output is ignored by Git. Never use real sensitive captures in this harness.
+
+The regression also executes PGlite dumpDataDir -> fresh loadDataDir and verifies original bytes, record/assertion history, mutation replay and Stop. This is an actual disposable local database recovery drill; it does not establish Supabase backups/restore, import of the JSON export, native file sharing, household-wide export or release acceptance. Independent review repaired partial-page omission and confirmed the repair.
+
+Export/restore checkpoint: 76 unit/integration tests across fourteen files, strict typechecking/source scan and formatting passed. App code is unchanged from the correction checkpoint verified with thirteen browser journeys/all exports; this contribution does not inherit a future exact-head CI result.

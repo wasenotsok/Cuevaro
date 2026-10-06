@@ -216,3 +216,9 @@ Up to twenty explicit labeled item candidates require individual track/skip revi
 **Date:** 2026-10-06
 
 Reuse fact_assertions supersedes chains and source observations; corrections never rewrite evidence or extraction. Require a purchase version and UUID mutation receipt with canonical payload digest; exact replay returns the applied version separately from the latest coherent snapshot. Date changes supersede lifecycle versions and cancel obsolete cues atomically. Preserve explicit Stop and versioned dismiss/snooze intent even through Unknown; never revive stopped reminders. Retain local queued commands before upload, show last confirmed facts while pending, and require an authoritative refresh before discarding a queue. No provider migration/deployment is implied.
+
+## D-028 - Private development export and bounded recovery evidence
+**Status:** Synthetic development tool; native/managed acceptance open
+**Date:** 2026-10-06
+
+Reuse tenant authorization and transactional record snapshots. Export structured JSON/history plus separate originals with SHA-256/page/MIME metadata, compare the full ordered capture identity and reject partial/corrupt evidence. Create a fresh UUID directory under ignored .local/exports with exclusive files and immediate verification; no external upload, public endpoint or overwrite. Local PGlite dump/load tests preserve original/history/replay/Stop state; distinguish that from managed backups, native export UX and JSON reimport.

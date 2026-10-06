@@ -281,3 +281,5 @@ Business requirements and pricing are separate from the consumer plan.
 - No expansion module may compromise V1 capture speed or trust.
 
 2026-10-06 independent correction contribution: immutable field/item history, durable replay, offline correction queue and atomic cue replacement are locally implemented. Stop/dismiss/snooze survive Unknown roundtrips. This does not close Phase 1 or advance subsequent release gates; managed/native acceptance remains open.
+
+Private single-record developer export and disposable PGlite dump/load recovery now contribute local evidence without closing Phase 1. Native export UX, managed backup/restore and household-wide export remain open.

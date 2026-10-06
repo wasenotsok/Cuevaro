@@ -1,3 +1,5 @@
+import { PGlite } from "@electric-sql/pglite";
+import { exportRecord } from "../services/api/export";
 import { it, expect } from "vitest";
 import { randomUUID, createHash } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -14,6 +16,7 @@ import {
   openDevelopmentDb,
   developmentActor as actor,
   createCapture,
+  createPageCapture,
   runOneJob,
   getDraft,
   confirmPurchase,
@@ -321,6 +324,149 @@ it("durable dismissal and snooze survive an Unknown deadline roundtrip", async (
       ["scheduled", "2026-10-18"],
     ]);
   } finally {
+    await db.close();
+  }
+});
+
+it("private structured export preserves exact originals and history, audits metadata only and refuses foreign/revoked/corrupt evidence", async () => {
+  const db = await openDevelopmentDb();
+  try {
+    const { record, bytes } = await fixture(db);
+    const updated = await correctPurchase(db, actor, record.id, command(1));
+    const exported = await exportRecord(db, actor, record.id);
+    expect(exported.manifest.record.history).toEqual(updated.history);
+    expect(exported.manifest.record.itemHistory).toEqual(updated.itemHistory);
+    expect(Buffer.from(exported.originals[0].bytes)).toEqual(bytes);
+    expect(exported.manifest.originals[0].file).toMatch(
+      /^originals\/[a-f0-9-]+\.png$/,
+    );
+    expect(JSON.stringify(exported.manifest)).not.toContain('"bytes"');
+    expect(
+      (
+        await db.query(
+          "select * from audit_events where event_type='export_requested'",
+        )
+      ).rows,
+    ).toHaveLength(1);
+    await expect(
+      exportRecord(db, { ...actor, householdId: randomUUID() }, record.id),
+    ).rejects.toThrow("ACCESS_DENIED");
+    await expect(exportRecord(db, actor, randomUUID())).rejects.toThrow(
+      "NOT_FOUND",
+    );
+    await db.query("update private.evidence_bytes set original=$1", [
+      Buffer.from("corrupt"),
+    ]);
+    await expect(exportRecord(db, actor, record.id)).rejects.toThrow(
+      "EVIDENCE_INTEGRITY",
+    );
+    expect(
+      (
+        await db.query(
+          "select * from audit_events where event_type='export_requested'",
+        )
+      ).rows,
+    ).toHaveLength(1);
+    await db.query("update household_memberships set revoked_at=now()");
+    await expect(exportRecord(db, actor, record.id)).rejects.toThrow(
+      "ACCESS_DENIED",
+    );
+  } finally {
+    await db.close();
+  }
+});
+
+it("multi-page exports fail closed on missing originals or a changed capture manifest", async () => {
+  const db = await openDevelopmentDb();
+  try {
+    const first = await sharp(Buffer.from(syntheticReceiptSvg()))
+      .png()
+      .toBuffer();
+    const second = await sharp(
+      Buffer.from(
+        syntheticReceiptSvg().replace(
+          "Not a real purchase",
+          "Second synthetic page",
+        ),
+      ),
+    )
+      .png()
+      .toBuffer();
+    const capture = await createPageCapture(
+      db,
+      actor,
+      randomUUID(),
+      [first, second],
+      true,
+    );
+    await runOneJob(db, async (_, e) =>
+      extractText(syntheticReceiptText, e, "questionable", "2026-10-06"),
+    );
+    const draft = (await getDraft(db, actor, capture.id)).draft!;
+    const record = await confirmPurchase(
+      db,
+      actor,
+      capture.id,
+      Object.fromEntries(draft.observations.map((o) => [o.field, o.value])),
+      draft.itemCandidates?.map((c) => ({
+        candidateId: c.id,
+        name: c.observation.value,
+      })),
+    );
+    const exported = await exportRecord(db, actor, record.id);
+    expect(exported.originals).toHaveLength(2);
+    await db.query("delete from private.evidence_bytes where evidence_id=$1", [
+      exported.originals[1].id,
+    ]);
+    await expect(exportRecord(db, actor, record.id)).rejects.toThrow(
+      "EVIDENCE_INTEGRITY",
+    );
+    await db.query("insert into private.evidence_bytes values($1,$2)", [
+      exported.originals[1].id,
+      second,
+    ]);
+    await db.query("update captures set content_hash=$1 where id=$2", [
+      "a".repeat(64),
+      capture.id,
+    ]);
+    await expect(exportRecord(db, actor, record.id)).rejects.toThrow(
+      "EVIDENCE_INTEGRITY",
+    );
+  } finally {
+    await db.close();
+  }
+});
+it("synthetic database dump restores exact originals, corrected history, replay receipts and stopped intent in a fresh database", async () => {
+  const db = await openDevelopmentDb();
+  let restored: PGlite | undefined;
+  try {
+    const { record } = await fixture(db);
+    const input = command(1);
+    const corrected = await correctPurchase(db, actor, record.id, input);
+    await changeAttention(
+      db,
+      actor,
+      record.id,
+      { type: "stop", kind: "return" },
+      corrected.version,
+    );
+    const before = await exportRecord(db, actor, record.id);
+    const dump = await db.dumpDataDir();
+    restored = new PGlite({ loadDataDir: dump });
+    await restored.waitReady;
+    const after = await exportRecord(restored, actor, record.id);
+    expect(after.manifest.record).toEqual(before.manifest.record);
+    expect(Buffer.from(after.originals[0].bytes)).toEqual(
+      Buffer.from(before.originals[0].bytes),
+    );
+    const replay = await correctPurchase(restored, actor, record.id, input);
+    expect(replay.appliedVersion).toBe(2);
+    expect(replay.version).toBe(3);
+    expect(replay.events.find((e) => e.kind === "return")?.status).toBe(
+      "not_applicable",
+    );
+  } finally {
+    await restored?.close();
     await db.close();
   }
 });
