@@ -35,7 +35,13 @@ Dependency audit currently reports high findings propagated through Expo/Metro t
 
 The [dependency investigation](DEPENDENCY_RISK.md) records exact paths, exploit conditions, implemented API isolation/localhost containment, zero findings in the selected API runtime audit, and concrete upstream/backport alternatives. This isolation reduces exposure and is not a mobile-toolchain waiver.
 
-## Reproduction
+## Embedded-text PDF checkpoint - 2026-10-06
+
+Actual Mozilla PDF.js parsing is isolated in a minimal-environment child process, with 20 MB input, ten-page, 100,000-character, 15-second, 192 MB V8-heap and bounded-output limits. These are containment, not a total-memory/OS sandbox guarantee. No rendering, annotation/JavaScript actions or document URLs are invoked; eval/XFA/WASM/fetch are disabled. Original PDFs are stored before parsing. Supported labeled text becomes low-confidence candidates with page provenance; conflicting labels within/across pages remain Unknown. Password/corruption/page/text-limit and no-text failures retain originals and terminalize jobs without futile retry loops. Scanned-PDF OCR/native original viewing remain unsupported.
+
+39 unit/integration tests passed across nine files, including actual text parsing, two-page lifecycle facts and provenance persistence, cross-page/same-page conflicts, hidden-text uncertainty, unsupported-original retention, password/corrupt/page/text/size/time limits. Eight browser journeys passed, adding mobile PDF review → confirmation → reload/search → byte-exact original PDF download, and unsupported input → honest manual fallback → reload retention. Android/iOS/web bundle exports passed. Review/unsupported screenshots were visually inspected for readable wrapping, confidence/page visibility and explicit consequential confirmations; native hardware remains unverified. A visible pre-processing warning states embedded text may be hidden/differ from visible content.
+
+Official integration reference: [PDF.js API](https://mozilla.github.io/pdf.js/api/draft/module-pdfjsLib.html). PDF fixtures are generated ASCII files with real cross-reference tables, no real personal evidence. Parser behavior is versioned `receipt-text-v2` for the conflict fix; historic observations retain their version. Selected API runtime audit remains zero; the latest full audit reports 16 propagated high findings from the same two unresolved advisories. The earlier 28 count is historical, not evidence of upstream remediation.
 
 ## Document-region checkpoint - 2026-10-06
 
@@ -46,6 +52,8 @@ New browser coverage checks actionable Bad advice without bypass, 320px dark-mod
 Local results: 32 unit/integration tests, six browser tests, strict typechecking/source scan and Android/iOS/web bundle exports passed. The 320px dark-mode cut-off, obstruction and post-continuation review screenshots were visually inspected: readable wrapping, accessible explicit retake controls, no horizontal overflow. Browser screenshots cannot validate native camera or screen-reader behavior.
 
 Subsequent provider-default ACL regression brings the suite to 33 tests across eight files. It models broad client default grants, successfully reproduces RLS-bypassing TRUNCATE in a rolled-back empty synthetic transaction, applies the scoped forward migration, verifies six prohibited privileges across both client roles and thirteen tables, and retains authenticated household creation/tenant reads. Anonymous RPC/read and actual authenticated TRUNCATE then fail. This is real embedded PostgreSQL execution, not proof of live Supabase configuration.
+
+## Reproduction
 
 `npm ci && npm run check && npm run build:mobile`
 

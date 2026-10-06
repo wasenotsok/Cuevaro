@@ -125,3 +125,13 @@ export function qualityGate(s: ImageSignals): Quality {
 export function mayExtract(q: Quality, useAnyway: boolean): boolean {
   return q.grade === "good" || (q.grade === "questionable" && useAnyway);
 }
+export function pdfQuality(): Quality {
+  return {
+    grade: "questionable",
+    findings: [],
+    version: "quality-v2",
+    limits: [
+      "PDF text extraction supports up to 10 pages. Rendering/readability is not verified. Embedded text may be hidden or differ from the visible document. Check the original before continuing. Password-protected, corrupt and image-only PDFs require another input or manual review.",
+    ],
+  };
+}

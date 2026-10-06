@@ -1,6 +1,113 @@
 import { test, expect } from "@playwright/test";
 import sharp from "sharp";
 import { readFileSync } from "node:fs";
+import { syntheticPdf } from "../../packages/test-fixtures/pdf";
+test("mobile PDF text review retains page provenance and retrieves exact original after reload", async ({
+  page,
+}) => {
+  const bytes = syntheticPdf([
+    [
+      "Merchant: Synthetic PDF Shop",
+      "Date: 2026-10-05",
+      "Item: Test toaster",
+      "Total: PHP 1299.00",
+    ],
+    ["Return by: 2026-10-19", "Warranty ends: 2027-10-05"],
+  ]);
+  await page.goto("/");
+  await page
+    .getByRole("button", { name: "Open synthetic development preview" })
+    .click();
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Choose PDF", exact: true }).click();
+  await (
+    await chooser
+  ).setFiles({
+    name: "synthetic-receipt.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from(bytes),
+  });
+  await expect(
+    page.getByRole("heading", { name: /^Questionable/ }),
+  ).toBeVisible();
+  await expect(page.getByText(/Embedded text may be hidden/)).toBeVisible();
+  await page.screenshot({ path: ".local/pdf-quality.png" });
+  await expect(
+    page.getByRole("heading", { name: "Check these facts", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Use anyway", exact: true }).click();
+  await expect(page.getByLabel("Item", { exact: true })).toHaveValue(
+    "Test toaster",
+    { timeout: 60000 },
+  );
+  const source = page.getByText(
+    'Receipt (PDF page 2): "Return by: 2026-10-19"',
+    { exact: true },
+  );
+  await expect(source).toBeVisible();
+  await source.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: ".local/pdf-review.png" });
+  for (const name of [
+    "Confirm purchase date",
+    "Confirm total",
+    "Confirm return deadline",
+    "Track warranty",
+  ])
+    await page.getByRole("button", { name, exact: true }).click();
+  await page.getByRole("button", { name: "Save purchase & cues" }).click();
+  await expect(
+    page.getByText("What Cuevaro is watching", { exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Open synthetic development preview" })
+    .click();
+  await page.getByRole("button", { name: "Things", exact: true }).click();
+  await page.getByLabel("Search saved purchases").fill("toaster");
+  await page.getByRole("button", { name: "Open saved purchase" }).click();
+  await page
+    .getByRole("button", { name: "View original evidence", exact: true })
+    .click();
+  const download = page.waitForEvent("download");
+  await page
+    .getByRole("button", { name: "Download original PDF", exact: true })
+    .click();
+  expect(readFileSync((await (await download).path())!)).toEqual(
+    Buffer.from(bytes),
+  );
+});
+test("unsupported PDF keeps its original and offers honest manual fallback", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page
+    .getByRole("button", { name: "Open synthetic development preview" })
+    .click();
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Choose PDF", exact: true }).click();
+  await (
+    await chooser
+  ).setFiles({
+    name: "synthetic-image-only.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from(syntheticPdf([[]])),
+  });
+  await page.getByRole("button", { name: "Use anyway", exact: true }).click();
+  await expect(page.getByText(/No embedded text was found/)).toBeVisible({
+    timeout: 60000,
+  });
+  await expect(
+    page.getByRole("button", { name: "Review manually", exact: true }),
+  ).toBeVisible();
+  await page.screenshot({ path: ".local/pdf-unsupported.png" });
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Open synthetic development preview" })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Resume saved capture", exact: true }),
+  ).toHaveCount(1);
+});
 test("pixel quality decisions show actionable advice on narrow mobile in dark mode", async ({
   page,
 }) => {

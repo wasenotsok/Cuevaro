@@ -20,3 +20,7 @@ Independent review found edge covers and missing corners could produce false Goo
 ## Provider-default grants - 2026-10-06
 
 Reviewer found no actionable defect in the scoped forward permission migration and actual before/after TRUNCATE regression. It preserves authenticated tenant reads and the household RPC, changes no stored rows, and leaves unrelated tables/service-role grants untouched. A regression asserts the latter scope boundaries. Live Supabase/storage ACLs, custom inherited roles and column-specific grants remain external verification limits; this is not universal backend privilege closure.
+
+## Embedded-text PDF review - 2026-10-06
+
+Reviewer found no actionable parser-execution or authority-bypass defect in the bounded data-only child process, minimal environment, conservative conflicts and original-retaining failure paths. It requested a visible warning before continuation because embedded text can be hidden/differ from visible evidence; the warning is now rendered and browser-tested, with an actual invisible-text regression remaining low-confidence/Questionable. OS-level memory isolation, adversarial corpus and native viewing remain unverified.

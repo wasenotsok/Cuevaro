@@ -71,6 +71,8 @@ Local contribution, 2026-10-05: original preservation, camera/library/PDF import
 
 2026-10-06: provisional shared document-region checks now identify visible cut-off, skew, perspective, obstruction and interior washout in synthetic pixels. Pixel-only completeness remains uncertain, including camouflaged edge covers, and requires conscious continuation. Representative camera calibration remains open; no phase gate is closed.
 
+Independent contribution, 2026-10-06: local embedded-text PDF import supports up to ten pages in a bounded child process, conservative review/page provenance and original retrieval. Unsupported/password/corrupt/no-text inputs retain originals and show manual alternatives. Scanned-PDF OCR, native viewing and multi-page photo assembly remain implementation gaps. PDF text is not verified visible content; explicit warning/continuation is required. Phase 1 remains incomplete.
+
 Goal: make capture faster and safer than manual entry.
 
 Scope:

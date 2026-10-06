@@ -29,7 +29,7 @@ import {
   type Field,
   type Draft,
 } from "../../packages/domain/purchase";
-import { mayExtract } from "../../packages/domain/quality";
+import { mayExtract, pdfQuality } from "../../packages/domain/quality";
 import {
   updateAttention,
   type AttentionCommand,
@@ -158,17 +158,7 @@ export default function App() {
         if (c.draft && c.state !== "confirmed") showDraft(c.draft);
         return;
       }
-      const q =
-        mime === "application/pdf"
-          ? {
-              grade: "questionable" as const,
-              findings: [],
-              version: "quality-v1" as const,
-              limits: [
-                "PDF rendering and OCR are not implemented. Preserve it and review manually.",
-              ],
-            }
-          : await inspect(uri);
+      const q = mime === "application/pdf" ? pdfQuality() : await inspect(uri);
       const updated = { ...c, quality: q };
       await store.saveCapture(updated);
       setCapture(updated);
@@ -228,20 +218,9 @@ export default function App() {
     setBusy(true);
     setError("");
     let pending = c;
+    let unsupportedPdf = false;
     try {
       await store.saveCapture({ ...c, state: "local_pending" });
-      if (c.mime === "application/pdf") {
-        setMessage("PDF OCR is not enabled. Enter only facts you can verify.");
-        showDraft(
-          extractText(
-            "",
-            c.id,
-            "questionable",
-            new Date().toISOString().slice(0, 10),
-          ),
-        );
-        return;
-      }
       const ack = await request("/v1/captures", {
         clientId: c.id,
         base64: bytes64(c.bytes),
@@ -271,7 +250,25 @@ export default function App() {
           await reload();
           return;
         }
-        if (result.state === "failed") throw Error("EXTRACTION_FAILED");
+        if (result.state === "failed") {
+          const advice: Record<string, string> = {
+            PDF_PASSWORD_REQUIRED:
+              "This PDF needs a password. Choose an unlocked copy or review manually; do not send passwords here.",
+            PDF_NO_TEXT:
+              "No embedded text was found. Scanned PDF OCR is not enabled. Choose receipt photos or review manually.",
+            PDF_PAGE_LIMIT:
+              "This PDF exceeds the 10-page extraction limit. Choose a shorter document or review manually.",
+            PDF_TEXT_LIMIT:
+              "This PDF exceeds the extraction text limit. Choose a shorter document or review manually.",
+            PDF_INVALID:
+              "This PDF could not be parsed. The original is retained. Choose another copy or review manually.",
+          };
+          if (advice[result.errorCode]) {
+            unsupportedPdf = true;
+            setMessage(advice[result.errorCode]);
+          }
+          throw Error("EXTRACTION_FAILED");
+        }
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
       throw Error("PROCESSING_PENDING");
@@ -280,7 +277,9 @@ export default function App() {
       setCapture({ ...pending, state: "failed" });
       await reload();
       setError(
-        "Processing is unavailable or pending. The original is safe on this device. Retry after reconnecting, or review manually.",
+        unsupportedPdf
+          ? "Automatic extraction cannot process this PDF. The original is retained. Choose another document or review manually."
+          : "Processing is unavailable or pending. The original is safe on this device. Retry after reconnecting, or review manually.",
       );
     } finally {
       setBusy(false);
@@ -630,8 +629,13 @@ export default function App() {
               ))}
               {capture.mime === "application/pdf"
                 ? text(
-                    "PDF OCR is not enabled. Original retained for manual review.",
+                    "PDF text can be extracted in the local development harness. Scanned PDF OCR and native PDF viewing are not enabled. Original retained.",
                   )
+                : null}
+              {capture.mime === "application/pdf"
+                ? capture.quality?.limits.map((limit, i) => (
+                    <React.Fragment key={i}>{text(limit)}</React.Fragment>
+                  ))
                 : null}
               <Button
                 label={copy.source}
@@ -683,6 +687,31 @@ export default function App() {
             resizeMode="contain"
           />
         ) : null}
+        {preview && original?.mime === "application/pdf" ? (
+          <View>
+            {text("Original PDF retained. This app does not render PDF pages.")}
+            {Platform.OS === "web" ? (
+              <Button
+                label="Download original PDF"
+                onPress={() => {
+                  const blob = new Blob([new Uint8Array(original.bytes)], {
+                    type: "application/pdf",
+                  });
+                  const uri = URL.createObjectURL(blob);
+                  const anchor = document.createElement("a");
+                  anchor.href = uri;
+                  anchor.download = "cuevaro-original.pdf";
+                  anchor.click();
+                  setTimeout(() => URL.revokeObjectURL(uri), 5000);
+                }}
+              />
+            ) : (
+              text(
+                "Native PDF viewing is not connected in this development build.",
+              )
+            )}
+          </View>
+        ) : null}
         {draft &&
           card(
             <>
@@ -721,7 +750,7 @@ export default function App() {
                   />
                   {text(
                     o.excerpt
-                      ? `Receipt: “${o.excerpt}”`
+                      ? `Receipt${o.pages?.length ? ` (PDF page ${o.pages.join(", ")})` : ""}: "${o.excerpt}"`
                       : "No supporting text found.",
                   )}
                   {text(

@@ -200,6 +200,24 @@
         "Custom inherited roles and column ACLs unverified",
         "Managed access and approved identities pending"
       ]
+    },
+    {
+      "event_id": "cuevaro-bounded-pdf-text",
+      "timestamp": "2026-10-06T10:19:31.2556345Z",
+      "date": "2026-10-06",
+      "actor": "Development",
+      "event_type": "implementation",
+      "title": "Bounded actual PDF text extraction, page provenance, conflict uncertainty and mobile retrieval",
+      "evidence": [
+        "tests/pdf.test.ts",
+        "docs/VALIDATION.md",
+        "docs/INDEPENDENT_REVIEW.md"
+      ],
+      "limitations": [
+        "No scanned PDF OCR or native PDF viewing",
+        "No OS-level sandbox or representative adversarial corpus",
+        "Phase 1 gates and dependency gate remain open"
+      ]
     }
   ]
 }

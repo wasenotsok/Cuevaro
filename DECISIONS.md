@@ -186,3 +186,9 @@ Extend D-018 with shared native/server light-paper segmentation on contrasting b
 **Date:** 2026-10-06
 
 Owner approved Supabase Free in Singapore (`ap-southeast-1`), synthetic data and explicitly approved developer identities. Paid activation, real sensitive captures, external testers and public deployment remain outside this checkpoint. Secure access and the identity list are pending; see docs/PRIVATE_DEVELOPMENT_PLAN.md. Do not infer identities or claim managed validation before executing it.
+
+## D-023 - Bounded embedded-text PDF development adapter
+**Status:** Local synthetic development implementation; native/rendered PDF gates open
+**Date:** 2026-10-06
+
+Use official Mozilla PDF.js 6.4.299 only in the Node API workspace, with a separate process, 192 MB V8 heap, 15-second deadline, 20 MB input, ten-page, 100,000-character and bounded output limits. Disable eval/XFA/WASM/remote fetching; request text only, not scripts/annotations or rendering. This is containment, not an OS sandbox or total-memory guarantee. Preserve originals before parsing; terminalize deterministic unsupported cases. Embedded text may be hidden or differ from visible content; show that warning and require explicit continuation, then low-confidence fact review. Retain page provenance and Unknown on conflicts. No scanned-PDF OCR or native viewing claim. Parser behavior is versioned receipt-text-v2 after removing last-label-wins ambiguity.

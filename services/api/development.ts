@@ -12,6 +12,7 @@ import {
   qualityGate,
   mayExtract,
   type Quality,
+  pdfQuality,
 } from "../../packages/domain/quality";
 import {
   confirm,
@@ -21,6 +22,7 @@ import {
   type Field,
 } from "../../packages/domain/purchase";
 import { extractOriginal } from "../worker/extract";
+import { isPdf } from "../worker/pdf";
 import {
   updateAttention,
   type AttentionCommand,
@@ -111,11 +113,16 @@ export async function createCapture(
 ) {
   await assertActor(db, actor, true);
   if (bytes.length < 1 || bytes.length > 20000000) throw Error("INVALID_SIZE");
-  const quality = await imageQuality(bytes);
+  const pdf = isPdf(bytes);
+  const quality = pdf ? pdfQuality() : await imageQuality(bytes);
   if (!mayExtract(quality, useAnyway)) throw Error("QUALITY_REVIEW_REQUIRED");
   const hash = createHash("sha256").update(bytes).digest("hex");
-  const meta = await sharp(bytes).metadata(),
-    mime = meta.format === "png" ? "image/png" : "image/jpeg";
+  const meta = pdf ? null : await sharp(bytes).metadata(),
+    mime = pdf
+      ? "application/pdf"
+      : meta?.format === "png"
+        ? "image/png"
+        : "image/jpeg";
   return db.transaction(async (tx) => {
     const membership = (
       await tx.query(
@@ -260,10 +267,22 @@ export async function runOneJob(db: PGlite, extract = extractOriginal) {
         [job.id],
       );
     });
-  } catch {
+  } catch (error) {
+    const code =
+      error instanceof Error &&
+      [
+        "PDF_PAGE_LIMIT",
+        "PDF_TEXT_LIMIT",
+        "PDF_NO_TEXT",
+        "PDF_PASSWORD_REQUIRED",
+        "PDF_INVALID",
+        "PDF_INVALID_SIZE_OR_HEADER",
+      ].includes(error.message)
+        ? error.message
+        : "EXTRACTION_RETRY_REQUIRED";
     const failed = await db.query(
-      `update jobs set state=case when attempts>=3 then 'dead_letter' else 'pending' end,error_code='EXTRACTION_RETRY_REQUIRED',available_at=now()+interval '10 seconds',leased_until=null where id=$1 and state='processing' and attempts=$2 returning id`,
-      [job.id, job.attempts + 1],
+      `update jobs set state=case when attempts>=3 or $3 then 'dead_letter' else 'pending' end,error_code=$4,available_at=now()+interval '10 seconds',leased_until=null where id=$1 and state='processing' and attempts=$2 returning id`,
+      [job.id, job.attempts + 1, code !== "EXTRACTION_RETRY_REQUIRED", code],
     );
     if (failed.rows.length)
       await db.query(
@@ -275,8 +294,12 @@ export async function runOneJob(db: PGlite, extract = extractOriginal) {
 }
 export async function getDraft(db: PGlite, actor: Actor, id: string) {
   await assertActor(db, actor);
-  const { rows } = await db.query<{ state: string; draft: Draft | null }>(
-    `select c.state,d.draft from captures c left join private.review_drafts d on d.capture_id=c.id where c.id=$1 and c.household_id=$2`,
+  const { rows } = await db.query<{
+    state: string;
+    draft: Draft | null;
+    errorCode: string | null;
+  }>(
+    `select c.state,d.draft,j.error_code as "errorCode" from captures c left join private.review_drafts d on d.capture_id=c.id left join jobs j on j.resource_id=c.id and j.type='extract' where c.id=$1 and c.household_id=$2`,
     [id, actor.householdId],
   );
   if (!rows[0]) throw Error("NOT_FOUND");
@@ -340,6 +363,7 @@ export async function confirmPurchase(
             source: f.observation.source,
             version: f.observation.version,
             reason: f.observation.reason,
+            pages: f.observation.pages,
           }),
         ],
       );

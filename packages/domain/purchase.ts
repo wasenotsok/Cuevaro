@@ -26,6 +26,7 @@ const observation = z
     source: z.enum(["document_extraction", "user_entered"]),
     version: z.string(),
     reason: z.string().max(100),
+    pages: z.array(z.number().int().min(1).max(10)).max(10).optional(),
   })
   .strict();
 export const draftSchema = z
@@ -95,15 +96,29 @@ export function extractText(
     evidenceId,
     excerpt: "",
     source: "document_extraction",
-    version: "receipt-text-v1",
+    version: "receipt-text-v2",
     reason: "missing",
   }));
+  const conflicts = new Set<Field>();
   const set = (
     field: Field,
     value: string,
     excerpt: string,
     confidence: Observation["confidence"] = "medium",
   ) => {
+    const previous = result[fields.indexOf(field)];
+    if (previous.value !== null && previous.value !== value)
+      conflicts.add(field);
+    if (conflicts.has(field)) {
+      result[fields.indexOf(field)] = {
+        ...previous,
+        value: null,
+        confidence: "unknown",
+        excerpt: "",
+        reason: "conflicting_document_fields",
+      };
+      return;
+    }
     if (validValue(field, value))
       result[fields.indexOf(field)] = {
         ...result[fields.indexOf(field)],
@@ -153,7 +168,7 @@ export function extractText(
   return draftSchema.parse({
     observations: result,
     provider: "local-text-parser",
-    version: "receipt-text-v1",
+    version: "receipt-text-v2",
   });
 }
 export function confirm(
