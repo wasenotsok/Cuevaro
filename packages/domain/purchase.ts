@@ -28,6 +28,18 @@ const observation = z
     version: z.string(),
     reason: z.string().max(100),
     pages: z.array(z.number().int().min(1).max(10)).max(10).optional(),
+    sources: z
+      .array(
+        z
+          .object({
+            evidenceId: z.string().min(1),
+            page: z.number().int().min(1).max(10),
+            excerpt: z.string().max(400),
+          })
+          .strict(),
+      )
+      .max(10)
+      .optional(),
   })
   .strict();
 export const draftSchema = z

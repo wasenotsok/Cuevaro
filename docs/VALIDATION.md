@@ -61,6 +61,12 @@ Local results: 32 unit/integration tests, six browser tests, strict typechecking
 
 Subsequent provider-default ACL regression brings the suite to 33 tests across eight files. It models broad client default grants, successfully reproduces RLS-bypassing TRUNCATE in a rolled-back empty synthetic transaction, applies the scoped forward migration, verifies six prohibited privileges across both client roles and thirteen tables, and retains authenticated household creation/tenant reads. Anonymous RPC/read and actual authenticated TRUNCATE then fail. This is real embedded PostgreSQL execution, not proof of live Supabase configuration.
 
+## Multi-page photo checkpoint - 2026-10-06
+
+Up to ten distinct photos/20 MB total are preserved separately and assembled with an ordered manifest. Per-page quality is visible; any Bad page blocks extraction. Replacing a page retains the earlier original. A sealed manifest survives upload failure/lost acknowledgement and restart; uploaded/drafted originals cannot be rebound into another receipt. Real local Tesseract processes each photo sequentially, authorizing before every page and before commit. Candidates retain actual evidence IDs/page/excerpts; cross-page contradictory dates or malformed amounts remain Unknown. One confirmation creates one purchase/lifecycle.
+
+Local unit/integration verification: 64 tests across eleven files passed, including real two-page OCR and byte-exact database originals, idempotency/order conflicts, bounds/duplicates, foreign evidence refusal, cross-page uncertainty and revocation after page one (only one extractor call; no draft; both originals retained). Strict typechecking, source-pattern scan, formatting and Android/iOS/web bundle export passed. Browser verification covers bad-page replacement, lost upload acknowledgement/restart, original reimport after confirmation and injected synchronous atomic storage failure; exact final run is recorded in the checkpoint history. The 390px original-view screenshot was visually inspected: clear retained-original controls and readable evidence. Native SQLCipher transactions, physical capture, representative calibration and live migration 004 remain unverified. This does not close a phase or release gate.
+
 ## Reproduction
 
 `npm ci && npm run check && npm run build:mobile`

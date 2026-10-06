@@ -7,6 +7,7 @@ import {
   openDevelopmentDb,
   developmentActor,
   createCapture,
+  createPageCapture,
   getDraft,
   confirmPurchase,
   runOneJob,
@@ -24,6 +25,16 @@ const body = z
       .max(27000000)
       .regex(/^[A-Za-z0-9+/]*={0,2}$/),
     useAnyway: z.boolean(),
+    additionalPages: z
+      .array(
+        z
+          .string()
+          .min(1)
+          .max(27000000)
+          .regex(/^[A-Za-z0-9+/]*={0,2}$/),
+      )
+      .max(9)
+      .optional(),
   })
   .strict();
 const values = z
@@ -117,11 +128,14 @@ export async function buildApi(
   );
   app.post("/v1/captures", async (req) => {
     const b = body.parse(req.body);
-    return createCapture(
+    return createPageCapture(
       db,
       developmentActor,
       b.clientId,
-      Buffer.from(b.base64, "base64"),
+      [
+        Buffer.from(b.base64, "base64"),
+        ...(b.additionalPages ?? []).map((p) => Buffer.from(p, "base64")),
+      ],
       b.useAnyway,
     );
   });
@@ -172,7 +186,7 @@ export async function buildApi(
         createdAt: p.created_at,
         facts: (
           await db.query(
-            `select f.id,f.field_name as field,f.value,f.authority_type as authority,f.confirmed_by_user_id as "actorId",f.confirmed_at as "confirmedAt",json_build_object('field',o.field_name,'value',o.value,'confidence',o.confidence,'evidenceId',o.evidence_id,'excerpt',o.source_locator->>'excerpt','source',o.source_locator->>'source','version',o.source_locator->>'version','reason',coalesce(o.source_locator->>'reason','requires_review'))::jsonb || case when o.source_locator ? 'pages' then jsonb_build_object('pages',o.source_locator->'pages') else '{}'::jsonb end as observation from fact_assertions f join observations o on o.id=f.source_observation_id where f.purchase_id=$1 and f.household_id=$2`,
+            `select f.id,f.field_name as field,f.value,f.authority_type as authority,f.confirmed_by_user_id as "actorId",f.confirmed_at as "confirmedAt",json_build_object('field',o.field_name,'value',o.value,'confidence',o.confidence,'evidenceId',o.evidence_id,'excerpt',o.source_locator->>'excerpt','source',o.source_locator->>'source','version',o.source_locator->>'version','reason',coalesce(o.source_locator->>'reason','requires_review'))::jsonb || case when o.source_locator ? 'pages' then jsonb_build_object('pages',o.source_locator->'pages') else '{}'::jsonb end || case when o.source_locator ? 'sources' then jsonb_build_object('sources',o.source_locator->'sources') else '{}'::jsonb end as observation from fact_assertions f join observations o on o.id=f.source_observation_id where f.purchase_id=$1 and f.household_id=$2`,
             [p.id, developmentActor.householdId],
           )
         ).rows,

@@ -2,6 +2,183 @@ import { test, expect } from "@playwright/test";
 import sharp from "sharp";
 import { readFileSync } from "node:fs";
 import { syntheticPdf } from "../../packages/test-fixtures/pdf";
+test("multi-page receipt survives bad-page replacement, lost upload acknowledgement and restart with exact originals", async ({
+  page,
+}) => {
+  const original1 = readFileSync(".local/receipt-pages/page-1.png"),
+    original2 = readFileSync(".local/receipt-pages/page-2.png");
+  const bad = await sharp({
+    create: { width: 800, height: 800, channels: 3, background: "#080808" },
+  })
+    .png()
+    .toBuffer();
+  await page.goto("/");
+  await page
+    .getByRole("button", { name: "Open synthetic development preview" })
+    .click();
+  const select = async (label: string, bytes: Buffer, name: string) => {
+    const chooser = page.waitForEvent("filechooser");
+    await page.getByRole("button", { name: label, exact: true }).click();
+    await (
+      await chooser
+    ).setFiles({ name, mimeType: "image/png", buffer: bytes });
+  };
+  await select("Choose photo", original1, "synthetic-page-1.png");
+  await select("Choose next receipt page", bad, "synthetic-bad-page-2.png");
+  await expect(page.getByText("Page 2: bad", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Use anyway", exact: true }),
+  ).toHaveCount(0);
+  await select("Replace page 2", original2, "synthetic-page-2.png");
+  await expect(
+    page.getByText("Page 2: questionable", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "View earlier original 1", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "View page 2", exact: true }).click();
+  const image = page.getByAltText("Original purchase evidence");
+  await image.scrollIntoViewIfNeeded();
+  expect(await image.getAttribute("src")).toBe(
+    `data:image/png;base64,${original2.toString("base64")}`,
+  );
+  await page.screenshot({ path: ".local/multi-page-quality.png" });
+  await page.route("**/v1/captures", async (route) => {
+    await route.fetch();
+    await route.abort();
+  });
+  await page.getByRole("button", { name: "Use anyway", exact: true }).click();
+  await expect(
+    page.getByText(/original is safe on this device/i),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Choose next receipt page", exact: true }),
+  ).toHaveCount(0);
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Open synthetic development preview" })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Resume saved capture", exact: true }),
+  ).toHaveCount(1);
+  await page
+    .getByRole("button", { name: "Resume saved capture", exact: true })
+    .click();
+  await page.unroute("**/v1/captures");
+  await page
+    .getByRole("button", { name: "Retry processing", exact: true })
+    .click();
+  await expect(page.getByLabel("Return deadline", { exact: true })).toHaveValue(
+    "2026-10-19",
+    { timeout: 60000 },
+  );
+  await expect(
+    page.getByText('Receipt (page 2): "Return by: 2026-10-19"', {
+      exact: true,
+    }),
+  ).toBeVisible();
+  for (const name of [
+    "Confirm purchase date",
+    "Confirm total",
+    "Confirm return deadline",
+    "Track warranty",
+  ])
+    await page.getByRole("button", { name, exact: true }).click();
+  await page.getByRole("button", { name: "Save purchase & cues" }).click();
+  await expect(
+    page.getByText("What Cuevaro is watching", { exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Open synthetic development preview" })
+    .click();
+  await page.getByRole("button", { name: "Things", exact: true }).click();
+  await page.getByLabel("Search saved purchases").fill("Page test toaster");
+  await expect(
+    page.getByRole("button", { name: "Open saved purchase", exact: true }),
+  ).toHaveCount(1);
+  await page
+    .getByRole("button", { name: "Open saved purchase", exact: true })
+    .click();
+  for (const [i, bytes] of [original1, original2].entries()) {
+    await page
+      .getByRole("button", { name: `View page ${i + 1}`, exact: true })
+      .click();
+    expect(
+      await page.getByAltText("Original purchase evidence").getAttribute("src"),
+    ).toBe(`data:image/png;base64,${bytes.toString("base64")}`);
+  }
+  await page
+    .getByRole("button", { name: "View earlier original 1", exact: true })
+    .click();
+  expect(
+    await page.getByAltText("Original purchase evidence").getAttribute("src"),
+  ).toBe(`data:image/png;base64,${bad.toString("base64")}`);
+  await page.getByRole("button", { name: "Home", exact: true }).click();
+  await select("Choose photo", original1, "synthetic-page-1-again.png");
+  await expect(
+    page.getByText(
+      "This evidence is already saved. No duplicate purchase was created.",
+    ),
+  ).toBeVisible();
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Open synthetic development preview" })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Resume saved capture", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Things", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Open saved purchase", exact: true }),
+  ).toHaveCount(1);
+});
+test("failed atomic page attachment leaves both saved originals recoverable without a partial bundle", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page
+    .getByRole("button", { name: "Open synthetic development preview" })
+    .click();
+  const select = async (label: string, index: number) => {
+    const chooser = page.waitForEvent("filechooser");
+    await page.getByRole("button", { name: label, exact: true }).click();
+    await (
+      await chooser
+    ).setFiles({
+      name: `synthetic-page-${index}.png`,
+      mimeType: "image/png",
+      buffer: readFileSync(`.local/receipt-pages/page-${index}.png`),
+    });
+  };
+  await select("Choose photo", 1);
+  await page.evaluate(() => {
+    const put = IDBObjectStore.prototype.put;
+    IDBObjectStore.prototype.put = function (value: any, key?: IDBValidKey) {
+      if (value?.groupParentId)
+        throw new DOMException("Synthetic write failure", "DataCloneError");
+      return key === undefined
+        ? put.call(this, value)
+        : put.call(this, value, key);
+    };
+  });
+  await select("Choose next receipt page", 2);
+  await expect(
+    page.getByText(/Local storage could not finish the page attachment/),
+  ).toBeVisible();
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Open synthetic development preview" })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Resume saved capture", exact: true }),
+  ).toHaveCount(2);
+  await page
+    .getByRole("button", { name: "Resume saved capture", exact: true })
+    .first()
+    .click();
+  await expect(page.getByText(/1 receipt page\./)).toBeVisible();
+});
 test("mobile alternate receipt layout shows normalized dates with the original excerpt before confirmation", async ({
   page,
 }) => {

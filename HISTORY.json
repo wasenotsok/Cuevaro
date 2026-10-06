@@ -16,9 +16,7 @@
       "display_name": "Phase 1 — Engineering Foundation",
       "type": "phase",
       "status": "in_progress",
-      "dependencies": [
-        "phase-0"
-      ],
+      "dependencies": ["phase-0"],
       "started_at": "2026-10-05T15:03:33.3608387Z"
     },
     {
@@ -26,54 +24,42 @@
       "display_name": "Phase 2 — Capture and Quality Gate",
       "type": "phase",
       "status": "planned",
-      "dependencies": [
-        "phase-1"
-      ]
+      "dependencies": ["phase-1"]
     },
     {
       "key": "phase-3",
       "display_name": "Phase 3 — Intelligent Purchase Lifecycle",
       "type": "phase",
       "status": "planned",
-      "dependencies": [
-        "phase-2"
-      ]
+      "dependencies": ["phase-2"]
     },
     {
       "key": "phase-4",
       "display_name": "Phase 4 — Watch, Remind, Act",
       "type": "phase",
       "status": "planned",
-      "dependencies": [
-        "phase-3"
-      ]
+      "dependencies": ["phase-3"]
     },
     {
       "key": "phase-5",
       "display_name": "Phase 5 — Trust, Desktop Companion, and Household Readiness",
       "type": "phase",
       "status": "planned",
-      "dependencies": [
-        "phase-4"
-      ]
+      "dependencies": ["phase-4"]
     },
     {
       "key": "phase-6",
       "display_name": "Phase 6 — Closed Alpha",
       "type": "phase",
       "status": "planned",
-      "dependencies": [
-        "phase-5"
-      ]
+      "dependencies": ["phase-5"]
     },
     {
       "key": "phase-7",
       "display_name": "Phase 7 — Commercial Beta / V1",
       "type": "phase",
       "status": "planned",
-      "dependencies": [
-        "phase-6"
-      ]
+      "dependencies": ["phase-6"]
     }
   ],
   "events": [
@@ -133,10 +119,7 @@
       "timestamp": "2026-10-05T15:03:33.3708331Z",
       "title": "Synthetic local foundation and receipt-to-lifecycle slice implemented; roadmap gates remain open",
       "actor": "Development",
-      "evidence": [
-        "docs/VALIDATION.md",
-        "CURRENT_STATUS.md"
-      ],
+      "evidence": ["docs/VALIDATION.md", "CURRENT_STATUS.md"],
       "limitations": [
         "No native hardware verification",
         "No managed auth/storage/staging activation",
@@ -234,6 +217,25 @@
       "limitations": [
         "Labeled synthetic receipts only",
         "No multi-item or unlabeled merchant inference",
+        "Phase 1 and dependency gates remain open"
+      ]
+    },
+    {
+      "event_id": "cuevaro-multi-page-photo-capture",
+      "timestamp": "2026-10-06T10:59:44.3916906Z",
+      "date": "2026-10-06",
+      "actor": "Development",
+      "event_type": "implementation",
+      "title": "Original-preserving multi-page capture, real per-page OCR, atomic recovery and reviewed identity fixes",
+      "evidence": [
+        "tests/capture-pages.test.ts",
+        "tests/e2e/mobile.spec.ts",
+        "docs/VALIDATION.md",
+        "docs/INDEPENDENT_REVIEW.md"
+      ],
+      "limitations": [
+        "Synthetic local verification only",
+        "Native hardware and live migration unverified",
         "Phase 1 and dependency gates remain open"
       ]
     }

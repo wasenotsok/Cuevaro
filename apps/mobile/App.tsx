@@ -20,6 +20,7 @@ import {
   type RecordCache,
 } from "./storage";
 import { pick, preserve, inspect, cleanupCaptureCache } from "./capture";
+import { capturePages, assemblePage } from "./pages";
 import { copy } from "./strings";
 import {
   extractText,
@@ -111,6 +112,7 @@ export default function App() {
     [message, setMessage] = useState(""),
     [error, setError] = useState(""),
     [preview, setPreview] = useState(false),
+    [previewPageId, setPreviewPageId] = useState<string>(),
     [development, setDevelopment] = useState(false);
   async function reload(s = store) {
     if (!s) return;
@@ -187,6 +189,83 @@ export default function App() {
       setError(e instanceof Error ? e.message : "Could not open capture.");
     }
   }
+  async function choosePage(kind: "camera" | "library", replaceIndex?: number) {
+    if (!store || !capture) return;
+    setBusy(true);
+    setError("");
+    let uri: string | undefined,
+      preserved = false;
+    try {
+      const asset = await pick(kind);
+      if (!asset) return;
+      uri = asset.uri;
+      const result = await preserve(asset.bytes, asset.mime, store);
+      preserved = true;
+      if (
+        result.capture.id === capture.id ||
+        (capture.pageIds ?? []).includes(result.capture.id)
+      )
+        throw Error("This page is already included. Choose a different page.");
+      if (
+        result.capture.state === "confirmed" ||
+        result.capture.assemblySealed ||
+        result.capture.serverId ||
+        result.capture.draft ||
+        result.capture.pageIds ||
+        (result.capture.groupParentId &&
+          result.capture.groupParentId !== capture.id)
+      )
+        throw Error("PHOTO_PAGES_ONLY");
+      const page = { ...result.capture, quality: await inspect(asset.uri) };
+      await store.saveCapture(page);
+      const changes = await assemblePage(
+        capture,
+        page,
+        await store.captures(),
+        (text) =>
+          Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, text),
+        replaceIndex,
+      );
+      await store.saveCaptures(changes);
+      setCapture(changes[0]);
+      setDraft(undefined);
+      setPreview(false);
+      setPreviewPageId(undefined);
+      setMessage(
+        "Page original saved. Add every page of this receipt before continuing; review each page's quality.",
+      );
+      await reload();
+    } catch (e) {
+      const labels: Record<string, string> = {
+        LOCAL_STORAGE_FULL:
+          "Local storage could not finish the page attachment. Any originals already saved remain available.",
+        INVALID_PAGE_BUNDLE:
+          "Use up to 10 different receipt photos, totaling at most 20 MB.",
+        PHOTO_PAGES_ONLY:
+          "Choose a separate photo of this receipt. Already linked records cannot be attached as a new page.",
+        ASSEMBLY_ALREADY_SEALED:
+          "Processing has started. These originals are retained; start a new receipt capture for changes.",
+        MISSING_PAGE_ORIGINAL:
+          "A page original is unavailable on this device. Restore it before processing.",
+        PAGE_QUALITY_REQUIRED:
+          "A page has not been checked. Its saved original is retained.",
+      };
+      setError(
+        e instanceof Error
+          ? (labels[e.message] ?? e.message)
+          : "Could not attach the page. Any saved original is retained.",
+      );
+      await reload();
+    } finally {
+      if (uri)
+        try {
+          await cleanupCaptureCache(uri, preserved);
+        } catch {
+          setError("Original retained; temporary capture cleanup failed.");
+        }
+      setBusy(false);
+    }
+  }
   async function sample() {
     setBusy(true);
     try {
@@ -220,14 +299,20 @@ export default function App() {
     let pending = c;
     let unsupportedPdf = false;
     try {
-      await store.saveCapture({ ...c, state: "local_pending" });
+      pending = { ...c, assemblySealed: true };
+      await store.saveCapture({ ...pending, state: "local_pending" });
+      setCapture(pending);
+      const originals = capturePages(c, await store.captures());
       const ack = await request("/v1/captures", {
         clientId: c.id,
-        base64: bytes64(c.bytes),
+        base64: bytes64(originals[0].bytes),
+        ...(originals.length > 1
+          ? { additionalPages: originals.slice(1).map((p) => bytes64(p.bytes)) }
+          : {}),
         useAnyway: !!c.useAnyway,
       });
       if (!ack.durable || ack.hash !== c.hash) throw Error("INVALID_ACK");
-      pending = { ...c, serverId: ack.id };
+      pending = { ...pending, serverId: ack.id };
       await store.saveCapture(pending);
       setCapture(pending);
       setMessage(
@@ -497,8 +582,22 @@ export default function App() {
       {children}
     </View>
   );
+  const originalRoot =
+    capture ?? captures.find((c) => c.id === selected?.captureId);
+  const pageIds =
+    originalRoot?.pageIds ?? (originalRoot ? [originalRoot.id] : []);
+  const allowedPreviewIds = [
+    ...pageIds,
+    ...(originalRoot?.retiredPageIds ?? []),
+  ];
+  const chosenPageId =
+    previewPageId && allowedPreviewIds.includes(previewPageId)
+      ? previewPageId
+      : pageIds[0];
   const original =
-      capture ?? captures.find((c) => c.id === selected?.captureId),
+      chosenPageId === originalRoot?.id
+        ? originalRoot
+        : captures.find((c) => c.id === chosenPageId),
     evidenceUri = original?.mime.startsWith("image/")
       ? `data:${original.mime};base64,${bytes64(original.bytes)}`
       : undefined;
@@ -641,15 +740,81 @@ export default function App() {
                 label={copy.source}
                 onPress={() => setPreview(!preview)}
               />
+              {capture.mime.startsWith("image/") ? (
+                <>
+                  {text(
+                    `${pageIds.length} receipt page${pageIds.length === 1 ? "" : "s"}. Add all pages before processing. Originals are retained separately.`,
+                  )}
+                  {pageIds.map((id, i) => {
+                    const page =
+                      id === capture.id
+                        ? capture
+                        : captures.find((c) => c.id === id);
+                    const q = page?.originalQuality ?? page?.quality;
+                    return (
+                      <View key={id}>
+                        {text(`Page ${i + 1}: ${q?.grade ?? "Unprocessed"}`)}
+                        <Button
+                          label={`View page ${i + 1}`}
+                          onPress={() => {
+                            setPreviewPageId(id);
+                            setPreview(true);
+                          }}
+                        />
+                        {!capture.assemblySealed &&
+                        !capture.serverId &&
+                        !draft ? (
+                          <Button
+                            label={`Replace page ${i + 1}`}
+                            onPress={() => choosePage("library", i)}
+                          />
+                        ) : null}
+                        {!capture.assemblySealed &&
+                        !capture.serverId &&
+                        !draft &&
+                        q?.grade === "bad" ? (
+                          <Button
+                            label={`Retake page ${i + 1}`}
+                            onPress={() => choosePage("camera", i)}
+                          />
+                        ) : null}
+                      </View>
+                    );
+                  })}
+                  {!capture.assemblySealed &&
+                  !capture.serverId &&
+                  !draft &&
+                  pageIds.length < 10 ? (
+                    <>
+                      <Button
+                        label="Take next receipt page"
+                        onPress={() => choosePage("camera")}
+                      />
+                      <Button
+                        label="Choose next receipt page"
+                        onPress={() => choosePage("library")}
+                      />
+                    </>
+                  ) : null}
+                </>
+              ) : null}
               {capture.quality?.grade === "bad" ? (
                 <>
                   <Button
-                    label={copy.retake}
+                    label={
+                      pageIds.length > 1
+                        ? "Start a new receipt capture"
+                        : copy.retake
+                    }
                     primary
                     onPress={() => choose("camera")}
                   />
                   <Button
-                    label={copy.chooseAnother}
+                    label={
+                      pageIds.length > 1
+                        ? "Start a new receipt from a photo"
+                        : copy.chooseAnother
+                    }
                     onPress={() => choose("library")}
                   />
                 </>
@@ -677,6 +842,36 @@ export default function App() {
               ) : null}
             </>,
           )}
+        {!capture && originalRoot?.pageIds ? (
+          <View>
+            {text(`${pageIds.length} saved receipt pages`)}
+            {pageIds.map((id, i) => (
+              <Button
+                key={id}
+                label={`View page ${i + 1}`}
+                onPress={() => {
+                  setPreviewPageId(id);
+                  setPreview(true);
+                }}
+              />
+            ))}
+          </View>
+        ) : null}
+        {originalRoot?.retiredPageIds?.length ? (
+          <View>
+            {text("Earlier page originals retained")}
+            {originalRoot.retiredPageIds.map((id, i) => (
+              <Button
+                key={id}
+                label={`View earlier original ${i + 1}`}
+                onPress={() => {
+                  setPreviewPageId(id);
+                  setPreview(true);
+                }}
+              />
+            ))}
+          </View>
+        ) : null}
         {preview && evidenceUri ? (
           <Image
             accessible
@@ -750,7 +945,7 @@ export default function App() {
                   />
                   {text(
                     o.excerpt
-                      ? `Receipt${o.pages?.length ? ` (PDF page ${o.pages.join(", ")})` : ""}: "${o.excerpt}"`
+                      ? `Receipt${o.pages?.length ? ` (${originalRoot?.mime === "application/pdf" ? "PDF " : ""}page ${o.pages.join(", ")})` : ""}: "${o.excerpt}"`
                       : "No supporting text found.",
                   )}
                   {text(
@@ -862,6 +1057,16 @@ export default function App() {
             {title("Pending captures")}
             {captures
               .filter((c) => c.state !== "confirmed")
+              .filter(
+                (c) =>
+                  !c.groupParentId ||
+                  !captures.some((root) =>
+                    [
+                      ...(root.pageIds ?? []),
+                      ...(root.retiredPageIds ?? []),
+                    ].includes(c.id),
+                  ),
+              )
               .map((c) => (
                 <View key={c.id}>
                   {card(

@@ -28,3 +28,7 @@ Reviewer found no actionable parser-execution or authority-bypass defect in the 
 ## Alternate receipt format review - 2026-10-06
 
 Reviewer found named/year-first/unambiguous numeric dates deterministic and conservative, then reproduced valid totals masking unsupported competing monetary labels. The repair recognizes monetary labels before validation, keeps total/currency Unknown on malformed/unsupported/schema-invalid evidence, and propagates it across PDF pages with contributing provenance. Regressions cover same-page and cross-page malformed grouping, ambiguous currency symbols and oversized totals. Independent follow-up confirmed the repair; no further actionable defect found in that scope.
+
+## Multi-page photo review - 2026-10-06
+
+Reviewer found three defects: assembly changed the root hash and broke first-original deduplication; whole-bundle authorization permitted later pages after revocation during the first; and a sealed/uploaded standalone capture could be rebound into another receipt. Repairs compare retained original hashes, authorize before each extraction and reject sealed/server-backed/drafted attachment candidates. Browser reimport-after-confirmation, integration revocation-after-page-one and negative candidate regressions cover the repairs. Independent follow-up confirmed all three and found no further consequential defect. Review also assessed atomic writes, ordered manifests, source binding and retained replacements. This is read-only source review, not live-provider or physical-native acceptance.

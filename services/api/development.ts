@@ -4,6 +4,11 @@ import { createHash, randomUUID } from "node:crypto";
 import sharp from "sharp";
 import { documentPreflight } from "../../packages/domain/document-preflight";
 import {
+  pageManifest,
+  pagesQuality,
+} from "../../packages/domain/capture-pages";
+import { mergePageDrafts } from "../../packages/domain/merge-pages";
+import {
   authorize,
   type Actor,
   type Membership,
@@ -55,6 +60,16 @@ export async function openDevelopmentDb(path?: string) {
       [developmentActor.householdId, developmentActor.userId],
     );
   }
+  const column = await db.query(
+    "select column_name from information_schema.columns where table_schema='public' and table_name='evidence_objects' and column_name='page_number'",
+  );
+  if (!column.rows.length)
+    await db.exec(
+      readFileSync(
+        "supabase/migrations/202610060004_evidence_pages.sql",
+        "utf8",
+      ),
+    );
   return db;
 }
 export async function assertActor(db: PGlite, actor: Actor, write = false) {
@@ -111,18 +126,34 @@ export async function createCapture(
   bytes: Uint8Array,
   useAnyway: boolean,
 ) {
-  await assertActor(db, actor, true);
   if (bytes.length < 1 || bytes.length > 20000000) throw Error("INVALID_SIZE");
-  const pdf = isPdf(bytes);
-  const quality = pdf ? pdfQuality() : await imageQuality(bytes);
+  return createPageCapture(db, actor, clientId, [bytes], useAnyway);
+}
+export async function createPageCapture(
+  db: PGlite,
+  actor: Actor,
+  clientId: string,
+  originals: Uint8Array[],
+  useAnyway: boolean,
+) {
+  await assertActor(db, actor, true);
+  const hashes = originals.map((bytes) =>
+    createHash("sha256").update(bytes).digest("hex"),
+  );
+  const manifest = pageManifest(
+    hashes,
+    originals.map((bytes) => bytes.length),
+  );
+  if (originals.length > 1 && originals.some(isPdf))
+    throw Error("PHOTO_PAGES_ONLY");
+  const pageQualities: Quality[] = [];
+  for (const bytes of originals)
+    pageQualities.push(isPdf(bytes) ? pdfQuality() : await imageQuality(bytes));
+  const quality = pagesQuality(pageQualities);
   if (!mayExtract(quality, useAnyway)) throw Error("QUALITY_REVIEW_REQUIRED");
-  const hash = createHash("sha256").update(bytes).digest("hex");
-  const meta = pdf ? null : await sharp(bytes).metadata(),
-    mime = pdf
-      ? "application/pdf"
-      : meta?.format === "png"
-        ? "image/png"
-        : "image/jpeg";
+  const hash = manifest
+    ? createHash("sha256").update(manifest).digest("hex")
+    : hashes[0];
   return db.transaction(async (tx) => {
     const membership = (
       await tx.query(
@@ -141,8 +172,7 @@ export async function createCapture(
       if (old.content_hash !== hash) throw Error("IDEMPOTENCY_CONFLICT");
       return { id: old.id, hash, durable: true, duplicate: true };
     }
-    const id = randomUUID(),
-      evidence = randomUUID();
+    const id = randomUUID();
     await tx.query(
       `insert into captures(id,household_id,initiated_by_user_id,client_capture_id,state,content_hash,quality,captured_at) values($1,$2,$3,$4,'stored',$5,$6,now())`,
       [
@@ -154,22 +184,33 @@ export async function createCapture(
         JSON.stringify(quality),
       ],
     );
-    await tx.query(
-      `insert into evidence_objects(id,household_id,capture_id,storage_key,mime_type,byte_size,sha256) values($1,$2,$3,$4,$5,$6,$7)`,
-      [
+    for (const [index, bytes] of originals.entries()) {
+      const evidence = randomUUID(),
+        pdf = isPdf(bytes),
+        meta = pdf ? null : await sharp(bytes).metadata();
+      const mime = pdf
+        ? "application/pdf"
+        : meta?.format === "png"
+          ? "image/png"
+          : "image/jpeg";
+      await tx.query(
+        `insert into evidence_objects(id,household_id,capture_id,storage_key,mime_type,byte_size,sha256,page_number) values($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [
+          evidence,
+          actor.householdId,
+          id,
+          `${actor.householdId}/${id}/original${originals.length > 1 ? `-page-${index + 1}` : ""}`,
+          mime,
+          bytes.length,
+          hashes[index],
+          index + 1,
+        ],
+      );
+      await tx.query(`insert into private.evidence_bytes values($1,$2)`, [
         evidence,
-        actor.householdId,
-        id,
-        `${actor.householdId}/${id}/original`,
-        mime,
-        bytes.length,
-        hash,
-      ],
-    );
-    await tx.query(`insert into private.evidence_bytes values($1,$2)`, [
-      evidence,
-      bytes,
-    ]);
+        bytes,
+      ]);
+    }
     await tx.query(
       `insert into jobs(household_id,type,resource_id,idempotency_key) values($1,'extract',$2,$3)`,
       [actor.householdId, id, `extract:${id}:v1`],
@@ -217,8 +258,9 @@ export async function runOneJob(db: PGlite, extract = extractOriginal) {
       original: Uint8Array;
       quality: Quality;
       initiated_by_user_id: string;
+      page_number: number;
     }>(
-      `select e.id,b.original,c.quality,c.initiated_by_user_id from captures c join evidence_objects e on e.capture_id=c.id and e.household_id=c.household_id join private.evidence_bytes b on b.evidence_id=e.id where c.id=$1 and c.household_id=$2 and c.state in ('stored','processing','failed')`,
+      `select e.id,b.original,e.page_number,c.quality,c.initiated_by_user_id from captures c join evidence_objects e on e.capture_id=c.id and e.household_id=c.household_id join private.evidence_bytes b on b.evidence_id=e.id where c.id=$1 and c.household_id=$2 and c.state in ('stored','processing','failed') order by e.page_number`,
       [job.resource_id, job.household_id],
     );
     const row = rows[0];
@@ -228,15 +270,43 @@ export async function runOneJob(db: PGlite, extract = extractOriginal) {
       householdId: job.household_id,
     };
     await assertActor(db, actor, true);
-    const draft = draftSchema.parse(
-      await extract(
-        row.original,
-        row.id,
-        row.quality.grade === "good" ? "good" : "questionable",
-        new Date().toISOString().slice(0, 10),
-      ),
-    );
-    if (draft.observations.some((o) => o.evidenceId !== row.id))
+    const drafts = [];
+    for (const page of rows) {
+      await assertActor(db, actor, true); // Revocation stops subsequent page processing.
+      const d = draftSchema.parse(
+        await extract(
+          page.original,
+          page.id,
+          row.quality.grade === "good" ? "good" : "questionable",
+          new Date().toISOString().slice(0, 10),
+        ),
+      );
+      if (
+        d.observations.some(
+          (o) =>
+            o.evidenceId !== page.id ||
+            o.sources?.some((s) => s.evidenceId !== page.id),
+        )
+      )
+        throw Error("UNBOUND_EVIDENCE");
+      drafts.push({ draft: d, evidenceId: page.id });
+    }
+    const draft =
+      rows.length === 1
+        ? drafts[0].draft
+        : mergePageDrafts(
+            drafts,
+            "tesseract-local-pages",
+            "tesseract-7+receipt-text-v3+page-merge-v1",
+          );
+    const ids = new Set(rows.map((r) => r.id));
+    if (
+      draft.observations.some(
+        (o) =>
+          !ids.has(o.evidenceId) ||
+          o.sources?.some((s) => !ids.has(s.evidenceId)),
+      )
+    )
       throw Error("UNBOUND_EVIDENCE");
     await assertActor(db, actor, true); // Revalidation after extraction; revocation wins.
     await db.transaction(async (tx) => {
@@ -364,6 +434,7 @@ export async function confirmPurchase(
             version: f.observation.version,
             reason: f.observation.reason,
             pages: f.observation.pages,
+            sources: f.observation.sources,
           }),
         ],
       );

@@ -19,6 +19,12 @@ export type Capture = {
   state: "local_pending" | "review_ready" | "confirmed" | "failed";
   draft?: Draft;
   serverId?: string;
+  pageIds?: string[];
+  originalHash?: string;
+  originalQuality?: Quality;
+  groupParentId?: string;
+  assemblySealed?: boolean;
+  retiredPageIds?: string[];
 };
 export type RecordCache = {
   id: string;
@@ -33,6 +39,7 @@ export type RecordCache = {
 export interface LocalStore {
   captures(): Promise<Capture[]>;
   saveCapture(c: Capture): Promise<void>;
+  saveCaptures(captures: Capture[]): Promise<void>;
   records(): Promise<RecordCache[]>;
   saveRecord(r: RecordCache, c: Capture): Promise<void>;
 }
@@ -88,6 +95,10 @@ async function nativeStore(): Promise<LocalStore> {
         )
       ).map((r) => ({ ...JSON.parse(r.metadata), bytes: r.original })),
     saveCapture: (c) => save(db, c),
+    saveCaptures: (cs) =>
+      db.withExclusiveTransactionAsync(async (tx) => {
+        for (const c of cs) await save(tx, c);
+      }),
     records: async () =>
       (
         await db.getAllAsync<{ metadata: string }>(

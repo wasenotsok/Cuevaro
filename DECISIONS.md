@@ -198,3 +198,9 @@ Use official Mozilla PDF.js 6.4.299 only in the Node API workspace, with a separ
 **Date:** 2026-10-06
 
 Version receipt-text-v3 accepts explicit alternate labels, the unambiguous peso symbol, named English months, year-first dates and numeric dates whose month/day order yields only one valid interpretation. Do not use host locale or infer merchant from arbitrary headers. Ambiguous numeric dates, invalid/future purchase dates, inconsistent labels and conflicting consequential evidence stay Unknown. Equivalent repeated dates can share one candidate; preserve original excerpt and evidence association. Relative policy durations remain unsupported. Broader unlabeled/multi-item extraction remains separate.
+
+## D-025 - Ordered original-preserving photo pages
+**Status:** Local synthetic development implementation; native/managed gates open
+**Date:** 2026-10-06
+
+One receipt can contain up to ten distinct photos with a 20 MB aggregate byte limit. Preserve each original before decoding; append/replace links are atomic and keep earlier originals. Any Bad page blocks extraction; Questionable requires explicit continuation. Seal the ordered SHA-256 manifest before the first upload attempt, including failed acknowledgement, so retries cannot change an in-flight receipt. Reject already sealed/uploaded/drafted pages as new attachments. Extract pages sequentially with authorization revalidation before each; bind sources to actual immutable evidence IDs and page numbers. Conflicting/invalid consequential facts remain Unknown, and one explicit confirmation creates one lifecycle. Migration 004 adds page ordering without altering existing original bytes; no live application is inferred.

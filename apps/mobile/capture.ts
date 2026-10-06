@@ -29,7 +29,9 @@ export async function preserve(
     ),
     (v) => v.toString(16).padStart(2, "0"),
   ).join("");
-  const existing = (await store.captures()).find((c) => c.hash === hash);
+  const existing = (await store.captures()).find(
+    (c) => (c.originalHash ?? c.hash) === hash,
+  );
   if (existing) return { capture: existing, duplicate: true };
   const capture: Capture = {
     id: Crypto.randomUUID(),

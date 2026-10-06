@@ -71,7 +71,9 @@ Local contribution, 2026-10-05: original preservation, camera/library/PDF import
 
 2026-10-06: provisional shared document-region checks now identify visible cut-off, skew, perspective, obstruction and interior washout in synthetic pixels. Pixel-only completeness remains uncertain, including camouflaged edge covers, and requires conscious continuation. Representative camera calibration remains open; no phase gate is closed.
 
-Independent contribution, 2026-10-06: local embedded-text PDF import supports up to ten pages in a bounded child process, conservative review/page provenance and original retrieval. Unsupported/password/corrupt/no-text inputs retain originals and show manual alternatives. Scanned-PDF OCR, native viewing and multi-page photo assembly remain implementation gaps. PDF text is not verified visible content; explicit warning/continuation is required. Phase 1 remains incomplete.
+Independent contribution, 2026-10-06: local embedded-text PDF import supports up to ten pages in a bounded child process, conservative review/page provenance and original retrieval. Unsupported/password/corrupt/no-text inputs retain originals and show manual alternatives. Scanned-PDF OCR and native PDF viewing remain implementation gaps. PDF text is not verified visible content; explicit warning/continuation is required. Phase 1 remains incomplete.
+
+Multi-page photo contribution, 2026-10-06: ordered append/replace preserves separate originals and earlier replacements, requires per-page quality review and seals bundle identity before uploading. Up to ten photos/20 MB total share one receipt lifecycle with actual per-page OCR/provenance and Unknown on conflicting evidence. Atomic failure, lost acknowledgement/restart, original reimport and between-page revocation are covered locally. Native camera/storage and representative capture gates remain open.
 
 Goal: make capture faster and safer than manual entry.
 

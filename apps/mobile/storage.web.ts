@@ -35,14 +35,20 @@ async function webStore(): Promise<LocalStore> {
         [...new Set(entries.map((e) => e[0]))],
         "readwrite",
       );
-      for (const [name, value] of entries) tx.objectStore(name).put(value);
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(Error("LOCAL_STORAGE_FULL"));
       tx.onabort = () => reject(Error("LOCAL_STORAGE_FULL"));
+      try {
+        for (const [name, value] of entries) tx.objectStore(name).put(value);
+      } catch {
+        tx.abort();
+        reject(Error("LOCAL_STORAGE_FULL"));
+      }
     });
   return {
     captures: () => all<Capture>("captures"),
     saveCapture: (c) => write([["captures", c]]),
+    saveCaptures: (cs) => write(cs.map((c) => ["captures", c])),
     records: () => all<RecordCache>("records"),
     saveRecord: (r, c) =>
       write([
