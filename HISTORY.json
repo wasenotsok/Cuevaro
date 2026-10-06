@@ -344,7 +344,8 @@
         "tests/device-export.test.ts",
         "tests/e2e/mobile.spec.ts",
         "tests/extraction-benchmark.test.ts",
-        "docs/VALIDATION.md"
+        "docs/VALIDATION.md",
+        "https://github.com/wasenotsok/Cuevaro/actions/runs/37461734642"
       ],
       "limitations": [
         "Native sharing mocked; physical SDK/devices unavailable",
