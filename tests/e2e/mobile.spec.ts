@@ -1,5 +1,78 @@
 import { test, expect } from "@playwright/test";
 import sharp from "sharp";
+import { readFileSync } from "node:fs";
+test("pixel quality decisions show actionable advice on narrow mobile in dark mode", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 740 });
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.goto("/");
+  await page
+    .getByRole("button", { name: "Open synthetic development preview" })
+    .click();
+  for (const [name, advice] of [
+    ["cut_off", "Part of the receipt is cut off."],
+    ["occlusion", "A large region may cover or hide receipt text."],
+  ]) {
+    const chooser = page.waitForEvent("filechooser");
+    await page
+      .getByRole("button", {
+        name: name === "cut_off" ? "Choose photo" : "Choose another photo",
+        exact: true,
+      })
+      .click();
+    await (
+      await chooser
+    ).setFiles({
+      name: `synthetic-${name}.png`,
+      mimeType: "image/png",
+      buffer: readFileSync(`.local/document-preflight/${name}.png`),
+    });
+    await expect(
+      page.getByRole("heading", { name: /^Bad.*retake needed$/ }),
+    ).toBeVisible();
+    await expect(page.getByText(advice, { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Use anyway", exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Retake photo", exact: true }),
+    ).toBeVisible();
+    await page.screenshot({
+      path: `.local/quality-ui-${name}.png`,
+      fullPage: true,
+    });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+  }
+  const chooser = page.waitForEvent("filechooser");
+  await page
+    .getByRole("button", { name: "Choose another photo", exact: true })
+    .click();
+  await (
+    await chooser
+  ).setFiles({
+    name: "synthetic-bordered.png",
+    mimeType: "image/png",
+    buffer: readFileSync(".local/document-preflight/bordered.png"),
+  });
+  await expect(
+    page.getByRole("heading", {
+      name: /^Questionable.*check before continuing$/,
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Check these facts", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Use anyway", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Check these facts", exact: true }),
+  ).toBeVisible({ timeout: 60000 });
+  await page.screenshot({ path: ".local/quality-ui-good.png", fullPage: true });
+});
 test("mobile receipt → quality warning → real OCR → reviewed lifecycle → retrieval across reload", async ({
   page,
 }) => {

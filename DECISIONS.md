@@ -169,8 +169,20 @@ Global pixel checks cover blur/exposure/contrast/resolution. Absent verified edg
 
 Only explicit validated and user-reviewed dates create current return/warranty events. No merchant return period, warranty eligibility or regional law is assumed. Original observations survive user corrections. Calendar-date cue calculations record timezone/source fact IDs/rule version; optimistic versions govern reminder changes. Stopping reminders retains purchase/evidence and audit history.
 
-## D-020 — Dependency findings remain a release gate
+## D-020 - Dependency findings remain a release gate
 **Status:** Active engineering blocker; no waiver
 **Date:** 2026-10-05
 
 Available Vitest/UUID fixes were installed and verified. `braces` (GHSA-vfj7-8cjw-p6xm) and `node-forge` (GHSA-86w9-cpqp-85rv) remain upstream high advisories without a published patched release at inspection. CI keeps a separate failing dependency gate. Synthetic local development does not authorize public deployment or acceptance of these risks for real users.
+
+## D-021 - Bounded document-region quality heuristics
+**Status:** Provisional development implementation; representative calibration open
+**Date:** 2026-10-06
+
+Extend D-018 with shared native/server light-paper segmentation on contrasting backgrounds. Diagnose visible cut-off, skew, perspective, large obstruction and interior washout from bounded pixel previews; preserve originals and unknown edge completeness outside the supported image class. White backgrounds, camouflaged covers and semantic receipt completeness cannot be proven by these heuristics. Good describes observed capture signals, never extraction accuracy or guaranteed completeness. Native sources are checked against a 20 MP budget before image manipulation; previews are bounded to 900 by 1600 without enlargement.
+
+## D-022 - Private development provider approval
+**Status:** Owner approved; provisioning evidence pending
+**Date:** 2026-10-06
+
+Owner approved Supabase Free in Singapore (`ap-southeast-1`), synthetic data and explicitly approved developer identities. Paid activation, real sensitive captures, external testers and public deployment remain outside this checkpoint. Secure access and the identity list are pending; see docs/PRIVATE_DEVELOPMENT_PLAN.md. Do not infer identities or claim managed validation before executing it.

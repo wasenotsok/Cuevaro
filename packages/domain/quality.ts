@@ -6,13 +6,15 @@ export type Finding =
   | "small_text"
   | "cut_off"
   | "skew"
+  | "perspective"
+  | "washout"
   | "occlusion"
   | "multiple_documents"
   | "unverified_edges";
 export type Quality = {
   grade: "good" | "questionable" | "bad";
   findings: Finding[];
-  version: "quality-v1";
+  version: "quality-v1" | "quality-v2";
   limits: string[];
 };
 export type ImageSignals = {
@@ -24,6 +26,8 @@ export type ImageSignals = {
   occluded?: boolean;
   documentCount?: number;
   textHeightPx?: number;
+  perspectiveRatio?: number;
+  regionalWashout?: boolean;
 };
 // Conservative preflight, not calibrated document understanding. Geometry/OCR checks
 // must supply measurements; absent edge detection cannot imply complete evidence.
@@ -102,14 +106,19 @@ export function qualityGate(s: ImageSignals): Quality {
     f.push("occlusion");
     bad = true;
   }
+  if (s.perspectiveRatio !== undefined && s.perspectiveRatio > 1.35) {
+    f.push("perspective");
+    if (s.perspectiveRatio > 1.9) bad = true;
+  }
+  if (s.regionalWashout) f.push("washout");
   if (s.documentCount !== undefined && s.documentCount > 1)
     f.push("multiple_documents");
   return {
     grade: bad ? "bad" : f.length ? "questionable" : "good",
     findings: f,
-    version: "quality-v1",
+    version: "quality-v2",
     limits: [
-      "Heuristic thresholds are provisional; physical-receipt benchmark and edge/occlusion detector validation remain open.",
+      "Provisional pixel heuristics support light paper on contrasting backgrounds. Background-colored covers and semantic receipt completeness cannot be verified; inspect every edge before continuing. White-on-white washout and real-camera calibration remain unverified.",
     ],
   };
 }

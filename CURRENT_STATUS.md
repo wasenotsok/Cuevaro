@@ -1,6 +1,6 @@
 # Cuevaro Current Status
 
-Status date: 2026-10-05  
+Status date: 2026-10-06
 Project registry status: active  
 Implementation state: **Phase 1 in progress; synthetic local receipt-to-lifecycle development slice verified**
 
@@ -28,10 +28,12 @@ Final pre-review head `5c0d52f84ff235e7e0da90f10e762199935cac49` separately comp
 
 ## Next safe work and external gates
 
+2026-10-06 local checkpoint: shared bounded document-region preflight adds visible cut-off, skew, perspective, large obstruction and interior washout advice. Independent review reproduced background-colored edge covers; all pixel-only captures therefore retain unverified completeness and require conscious continuation before OCR. No arbitrary aspect-ratio rule can prove a complete receipt. Native source pixel budgets and bounded preview dimensions were tightened. Supabase provider/region approval is recorded below; managed access remains pending.
+
 1. Review the draft development PR and its exact CI results; resolve available dependency fixes without weakening the gate.
-2. Approve/configure a private development managed-service environment, region and privacy path before enabling real authentication/storage or remote extraction. No provider account, credential, paid service or staging deployment was created.
+2. Supabase Free in Singapore is Owner-approved for synthetic private development. Secure project access, project reference and explicitly approved developer identities are pending; no provider account, credential, paid service or staging deployment was created. The private Node API/worker hosting path remains unresolved.
 3. Produce and test native development binaries on actual Android/iOS devices; validate SQLCipher, camera quality, offline recovery, screen readers and text scaling. JavaScript/Hermes bundle export does not prove these.
-4. Calibrate quality/extraction against a legally usable representative benchmark. Geometric/occlusion/glare-region detection, unlabeled merchant layouts, multi-item receipts, PDF OCR, share-sheet/barcode, and broad provider extraction remain incomplete.
+4. Calibrate quality/extraction against a legally usable representative benchmark. Provisional light-paper geometry, obstruction and washout checks are being verified locally; representative camera calibration, unlabeled merchant layouts, multi-item receipts, PDF OCR, share-sheet/barcode, and broad provider extraction remain incomplete.
 5. Complete durable production notification delivery and real storage/auth/deletion/restore tests before later phase gates can close.
 
 Current dependency release gate is blocked by unpatched upstream `braces` and `node-forge` advisories. No waiver or public deployment is authorized by this checkpoint.

@@ -37,6 +37,14 @@ The [dependency investigation](DEPENDENCY_RISK.md) records exact paths, exploit 
 
 ## Reproduction
 
+## Document-region checkpoint - 2026-10-06
+
+Shared bounded native/server preflight segments light paper on contrasting backgrounds, measures skew/perspective and detects visible cut-off, large obstruction and interior washout. Generated fixtures include full paper, cut-off, skew, trapezoid, brown interior/edge covers, bright washout, blank paper, missing corner and background-colored covers at two aspect ratios. Reports/images are ignored under `.local/document-preflight/`; they are synthetic regressions, not a representative benchmark. Independent review demonstrated a camouflaged bottom cover could pass geometry; pixel-only edges now remain unverified, so no automatic OCR starts before conscious continuation. A visible rectangle never proves semantic completeness. Native sources reject >20 MP before manipulation and both previews are bounded to 900x1600 without enlargement.
+
+New browser coverage checks actionable Bad advice without bypass, 320px dark-mode layout without horizontal overflow, and a clean-looking receipt requiring explicit continuation before actual OCR. Visual screenshots are local artifacts, not physical-device acceptance. This checkpoint does not inherit historical CI; exact new-head results must be checked separately.
+
+Local results: 32 unit/integration tests, six browser tests, strict typechecking/source scan and Android/iOS/web bundle exports passed. The 320px dark-mode cut-off, obstruction and post-continuation review screenshots were visually inspected: readable wrapping, accessible explicit retake controls, no horizontal overflow. Browser screenshots cannot validate native camera or screen-reader behavior.
+
 `npm ci && npm run check && npm run build:mobile`
 
 On Windows with Edge installed, `npm run test:e2e` uses headless Edge. CI installs bundled Chromium. The tests start their own ephemeral loopback API on 4329 and static preview on 4187, then clean up their servers. Ordinary development API uses `.local/database`; a restart preserves jobs/originals. Do not place real documents there.

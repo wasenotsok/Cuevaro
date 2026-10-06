@@ -69,6 +69,8 @@ Gate:
 
 Local contribution, 2026-10-05: original preservation, camera/library/PDF import seams, retry/deduplication and conservative three-state preflight are implemented/tested in the development slice. Geometry/occlusion detection and representative camera calibration remain open. This does not close Phase 1 or this phase's gate.
 
+2026-10-06: provisional shared document-region checks now identify visible cut-off, skew, perspective, obstruction and interior washout in synthetic pixels. Pixel-only completeness remains uncertain, including camouflaged edge covers, and requires conscious continuation. Representative camera calibration remains open; no phase gate is closed.
+
 Goal: make capture faster and safer than manual entry.
 
 Scope:

@@ -7,6 +7,7 @@ import { cleanupOwnedCache } from "../../packages/domain/capture-cache";
 import { Platform, Image } from "react-native";
 import jpeg from "jpeg-js";
 import { qualityGate } from "../../packages/domain/quality";
+import { documentPreflight } from "../../packages/domain/document-preflight";
 import type { Capture, LocalStore } from "./storage";
 export async function preserve(
   bytes: Uint8Array,
@@ -77,12 +78,31 @@ export async function pick(
   return { bytes, mime, uri };
 }
 export async function inspect(uri: string) {
-  const sourceWidth = await new Promise<number>((resolve, reject) =>
-    Image.getSize(uri, (w) => resolve(w), reject),
+  const [sourceWidth, sourceHeight] = await new Promise<[number, number]>(
+    (resolve, reject) => Image.getSize(uri, (w, h) => resolve([w, h]), reject),
   );
+  if (
+    !Number.isSafeInteger(sourceWidth) ||
+    !Number.isSafeInteger(sourceHeight) ||
+    sourceWidth < 1 ||
+    sourceHeight < 1 ||
+    sourceWidth * sourceHeight > 20000000
+  )
+    throw Error("IMAGE_PIXEL_LIMIT");
   const image = await ImageManipulator.manipulateAsync(
     uri,
-    [{ resize: { width: Math.min(900, sourceWidth) } }],
+    [
+      {
+        resize: {
+          width: Math.max(
+            1,
+            Math.floor(
+              Math.min(900, sourceWidth, sourceWidth * (1600 / sourceHeight)),
+            ),
+          ),
+        },
+      },
+    ],
     { format: ImageManipulator.SaveFormat.JPEG, base64: true, compress: 0.9 },
   );
   try {
@@ -99,11 +119,13 @@ export async function inspect(uri: string) {
           0.114 * decoded.data[i * 4 + 2],
       );
     // Original dimensions/readability must be evaluated, not upscaled pixels.
-    return qualityGate({
-      width: decoded.width,
-      height: decoded.height,
-      luminance,
-    });
+    return qualityGate(
+      documentPreflight({
+        width: decoded.width,
+        height: decoded.height,
+        luminance,
+      }),
+    );
   } finally {
     await cleanupCaptureCache(image.uri, true);
   }

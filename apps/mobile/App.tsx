@@ -52,7 +52,11 @@ const findingLabels: Record<string, string> = {
   small_text: "Text is too small to read reliably.",
   cut_off: "Part of the receipt is cut off.",
   skew: "The receipt angle is too steep.",
-  occlusion: "Part of the receipt is covered.",
+  perspective:
+    "The receipt is photographed at a steep perspective. Retake it straight-on.",
+  washout:
+    "A bright region may hide text. Check it against the original or retake without reflection.",
+  occlusion: "A large region may cover or hide receipt text.",
   multiple_documents: "There may be more than one document.",
   unverified_edges:
     "I cannot verify that every receipt edge is visible. Check the full receipt before continuing.",

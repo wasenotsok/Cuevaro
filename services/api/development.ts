@@ -2,6 +2,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
 import { createHash, randomUUID } from "node:crypto";
 import sharp from "sharp";
+import { documentPreflight } from "../../packages/domain/document-preflight";
 import {
   authorize,
   type Actor,
@@ -84,15 +85,22 @@ export async function imageQuality(bytes: Uint8Array): Promise<Quality> {
   if (!["jpeg", "png"].includes(meta.format ?? ""))
     throw Error("UNSUPPORTED_IMAGE");
   const { data, info } = await image
-    .resize({ width: 900, withoutEnlargement: true })
+    .resize({
+      width: 900,
+      height: 1600,
+      fit: "inside",
+      withoutEnlargement: true,
+    })
     .greyscale()
     .raw()
     .toBuffer({ resolveWithObject: true });
-  return qualityGate({
-    width: info.width,
-    height: info.height,
-    luminance: new Uint8Array(data),
-  });
+  return qualityGate(
+    documentPreflight({
+      width: info.width,
+      height: info.height,
+      luminance: new Uint8Array(data),
+    }),
+  );
 }
 export async function createCapture(
   db: PGlite,
