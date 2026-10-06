@@ -30,6 +30,10 @@ Final pre-review head `5c0d52f84ff235e7e0da90f10e762199935cac49` separately comp
 
 2026-10-06 local checkpoint: shared bounded document-region preflight adds visible cut-off, skew, perspective, large obstruction and interior washout advice. Independent review reproduced background-colored edge covers; all pixel-only captures therefore retain unverified completeness and require conscious continuation before OCR. No arbitrary aspect-ratio rule can prove a complete receipt. Native source pixel budgets and bounded preview dimensions were tightened. Supabase provider/region approval is recorded below; managed access remains pending.
 
+Provider-default permission hardening: a disposable PostgreSQL fixture reproduced authenticated `TRUNCATE` under broad default grants despite RLS. Forward migration `202610060003_client_privileges.sql` removes all client table privileges except authenticated SELECT on the thirteen application tables, and removes anonymous function grants explicitly. The regression verifies denied mutation/TRUNCATE/escalation privileges, retained household RPC/tenant reads and anonymous denial. No live provider migration has been applied.
+
+Exact capture-quality head `46b4661a58141ce45cfaf02c9a1cf252d4803a4c` completed [PR CI 37445474421](https://github.com/wasenotsok/Cuevaro/actions/runs/37445474421): verification passed; dependency gate failed. Later permission changes require their own exact-head CI and do not inherit that result.
+
 1. Review the draft development PR and its exact CI results; resolve available dependency fixes without weakening the gate.
 2. Supabase Free in Singapore is Owner-approved for synthetic private development. Secure project access, project reference and explicitly approved developer identities are pending; no provider account, credential, paid service or staging deployment was created. The private Node API/worker hosting path remains unresolved.
 3. Produce and test native development binaries on actual Android/iOS devices; validate SQLCipher, camera quality, offline recovery, screen readers and text scaling. JavaScript/Hermes bundle export does not prove these.

@@ -45,6 +45,8 @@ New browser coverage checks actionable Bad advice without bypass, 320px dark-mod
 
 Local results: 32 unit/integration tests, six browser tests, strict typechecking/source scan and Android/iOS/web bundle exports passed. The 320px dark-mode cut-off, obstruction and post-continuation review screenshots were visually inspected: readable wrapping, accessible explicit retake controls, no horizontal overflow. Browser screenshots cannot validate native camera or screen-reader behavior.
 
+Subsequent provider-default ACL regression brings the suite to 33 tests across eight files. It models broad client default grants, successfully reproduces RLS-bypassing TRUNCATE in a rolled-back empty synthetic transaction, applies the scoped forward migration, verifies six prohibited privileges across both client roles and thirteen tables, and retains authenticated household creation/tenant reads. Anonymous RPC/read and actual authenticated TRUNCATE then fail. This is real embedded PostgreSQL execution, not proof of live Supabase configuration.
+
 `npm ci && npm run check && npm run build:mobile`
 
 On Windows with Edge installed, `npm run test:e2e` uses headless Edge. CI installs bundled Chromium. The tests start their own ephemeral loopback API on 4329 and static preview on 4187, then clean up their servers. Ordinary development API uses `.local/database`; a restart preserves jobs/originals. Do not place real documents there.
