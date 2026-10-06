@@ -155,3 +155,11 @@ Do not begin by building every future Life Admin category.
 - whether Family sharing is public V1 or immediate post-V1.
 
 These are explicit open decisions, not missing documentation.
+
+## Correction and rescheduling checkpoint - 2026-10-06
+
+Confirmed fields and tracked names now support explicit corrections with immutable original observations, linked earlier/current assertions and visible history. Date corrections atomically replace supported lifecycle/cues; Unknown cancels unsupported scheduled cues. Prior Stop, dismissal and snooze intent survives corrections and Unknown roundtrips. A durable mutation receipt binds command UUID, payload digest and resulting version; retries after restart/lost acknowledgement do not duplicate history. Viewer, revoked, foreign-item/household, stale-version and conflicting-replay requests are refused.
+
+Mobile correction commands are saved before upload. Offline/lost-response edits show a queued draft while displaying last confirmed facts, support replay after restart and require a successful fresh read to discard the queue. Mutation responses and record reads use transactional snapshots. Synthetic PostgreSQL integration and mobile browser evidence remain development-only; migration 006 has not been applied to Supabase. Phase 1 remains open.
+
+Correction checkpoint verification: 73 unit/integration tests across fourteen files, all thirteen browser journeys, strict typechecking, formatting, source scan and Android/iOS/web exports passed. The mobile history screenshot was visually inspected for readable earlier/current facts and retained original sources. Test receipts are isolated to prevent shared-record contamination; no native-device claim.

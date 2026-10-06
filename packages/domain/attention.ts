@@ -31,8 +31,10 @@ export function updateAttention<T extends AttentionRecord>(
     const cue = cues.find((c) => c.id === command.cueId);
     if (!cue || !["scheduled", "delivered"].includes(cue.state))
       throw Error("INVALID_CUE");
-    if (command.type === "dismiss") cue.state = "dismissed";
-    else {
+    if (command.type === "dismiss") {
+      cue.state = "dismissed";
+      cue.intent = { type: "dismiss", version: record.version + 1 };
+    } else {
       if (
         !isoDate.safeParse(command.date).success ||
         command.date < today ||
@@ -40,6 +42,11 @@ export function updateAttention<T extends AttentionRecord>(
       )
         throw Error("INVALID_SNOOZE_DATE");
       cue.scheduledFor = command.date;
+      cue.intent = {
+        type: "snooze",
+        date: command.date,
+        version: record.version + 1,
+      };
       cue.state = "scheduled";
     }
   }

@@ -279,3 +279,5 @@ Business requirements and pricing are separate from the consumer plan.
 - No full accounting, CRM, budgeting, project management, or marketplace scope.
 - No autonomous external cancellation/claim submission without separate safety/integration design.
 - No expansion module may compromise V1 capture speed or trust.
+
+2026-10-06 independent correction contribution: immutable field/item history, durable replay, offline correction queue and atomic cue replacement are locally implemented. Stop/dismiss/snooze survive Unknown roundtrips. This does not close Phase 1 or advance subsequent release gates; managed/native acceptance remains open.

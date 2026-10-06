@@ -9,6 +9,7 @@ import type {
 } from "../../packages/domain/purchase";
 import type { Quality } from "../../packages/domain/quality";
 import type { ReviewedItem } from "../../packages/domain/review-items";
+import type { Correction, ItemFact } from "../../packages/domain/corrections";
 export type Capture = {
   id: string;
   hash: string;
@@ -34,6 +35,8 @@ export type RecordCache = {
   facts: ConfirmedFact[];
   items?: ReviewedItem[];
   history?: ConfirmedFact[];
+  itemHistory?: ItemFact[];
+  pendingCorrection?: Correction;
   events: Lifecycle[];
   cues: Cue[];
   createdAt: string;

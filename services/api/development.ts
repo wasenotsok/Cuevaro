@@ -9,7 +9,13 @@ import {
 } from "../../packages/domain/capture-pages";
 import { mergePageDrafts } from "../../packages/domain/merge-pages";
 import {
+  correctRecord,
+  correctionSchema,
+  type Correction,
+} from "../../packages/domain/corrections";
+import {
   reviewItems,
+  initialItemFacts,
   type ItemChoice,
 } from "../../packages/domain/review-items";
 import {
@@ -81,16 +87,33 @@ export async function openDevelopmentDb(path?: string) {
     await db.exec(
       readFileSync("supabase/migrations/202610060005_item_facts.sql", "utf8"),
     );
+  if (
+    !(
+      await db.query<{ present: unknown }>(
+        "select to_regclass('private.purchase_commands') present",
+      )
+    ).rows[0].present
+  )
+    await db.exec(
+      readFileSync(
+        "supabase/migrations/202610060006_correction_receipts.sql",
+        "utf8",
+      ),
+    );
   return db;
 }
-export async function assertActor(db: PGlite, actor: Actor, write = false) {
+export async function assertActor(
+  db: Pick<PGlite, "query">,
+  actor: Actor,
+  write = false,
+) {
   const { rows } = await db.query<{
     user_id: string;
     household_id: string;
     role: Membership["role"];
     revoked_at: string | null;
   }>(
-    `select * from household_memberships where household_id=$1 and user_id=$2`,
+    `select * from household_memberships where household_id=$1 and user_id=$2 for share`,
     [actor.householdId, actor.userId],
   );
   const m = rows[0];
@@ -497,7 +520,7 @@ export async function confirmPurchase(
       await tx.query(
         `insert into fact_assertions(id,household_id,purchase_id,item_id,field_name,value,authority_type,source_observation_id,confirmed_by_user_id) values($1,$2,$3,$4,'item',$5,$6,$7,$8)`,
         [
-          randomUUID(),
+          item.factId!,
           actor.householdId,
           id,
           item.id,
@@ -542,11 +565,193 @@ export async function confirmPurchase(
       captureId,
       facts,
       items,
+      history: facts,
+      itemHistory: initialItemFacts(items, actor.userId, now),
       ...result,
       createdAt: now,
       version: 1,
     };
   });
+}
+export async function correctPurchase(
+  db: PGlite,
+  actor: Actor,
+  purchaseId: string,
+  input: Correction,
+) {
+  const command = correctionSchema.parse(input);
+  await assertActor(db, actor, true);
+  const { getRecords } = await import("./records");
+  const digest = createHash("sha256")
+    .update(
+      JSON.stringify([
+        command.version,
+        command.field,
+        command.value,
+        command.itemId ?? null,
+      ]),
+    )
+    .digest("hex");
+  const appliedVersion = await db.transaction(async (tx) => {
+    const membership = (
+      await tx.query(
+        `select user_id from household_memberships where household_id=$1 and user_id=$2 and revoked_at is null and role in ('owner','member') for share`,
+        [actor.householdId, actor.userId],
+      )
+    ).rows;
+    if (!membership.length) throw Error("ACCESS_DENIED");
+    const purchase = (
+      await tx.query<{ version: number }>(
+        "select version from purchases where id=$1 and household_id=$2 for update",
+        [purchaseId, actor.householdId],
+      )
+    ).rows[0];
+    if (!purchase) throw Error("NOT_FOUND");
+    const replay = (
+      await tx.query<{ request_digest: string; resulting_version: number }>(
+        "select request_digest,resulting_version from private.purchase_commands where household_id=$1 and purchase_id=$2 and mutation_id=$3",
+        [actor.householdId, purchaseId, command.mutationId],
+      )
+    ).rows[0];
+    if (replay) {
+      if (replay.request_digest !== digest) throw Error("IDEMPOTENCY_CONFLICT");
+      return replay.resulting_version;
+    }
+    if (purchase.version !== command.version) throw Error("STATE_CONFLICT");
+    const before = (await getRecords(tx, actor, purchaseId))[0];
+    if (!before) throw Error("NOT_FOUND");
+    const result = correctRecord(
+      before,
+      command,
+      actor.userId,
+      new Date().toISOString(),
+      randomUUID,
+    );
+    const known = new Set(
+      [...before.history, ...before.itemHistory].map((f) => f.id),
+    );
+    for (const f of [...result.history, ...result.itemHistory].filter(
+      (f) => !known.has(f.id),
+    )) {
+      const old = (
+        await tx.query<{ source_observation_id: string }>(
+          "select source_observation_id from fact_assertions where id=$1 and purchase_id=$2 and household_id=$3",
+          [f.supersedesId, purchaseId, actor.householdId],
+        )
+      ).rows[0];
+      if (!old) throw Error("HISTORY_UNAVAILABLE");
+      await tx.query(
+        `insert into fact_assertions(id,household_id,purchase_id,item_id,field_name,value,authority_type,source_observation_id,confirmed_by_user_id,confirmed_at,supersedes_id) values($1,$2,$3,$4,$5,$6,'user_entered',$7,$8,$9,$10)`,
+        [
+          f.id,
+          actor.householdId,
+          purchaseId,
+          "itemId" in f ? f.itemId : null,
+          f.field,
+          JSON.stringify(f.value),
+          old.source_observation_id,
+          actor.userId,
+          f.confirmedAt,
+          f.supersedesId,
+        ],
+      );
+    }
+    for (const item of result.items)
+      await tx.query(
+        "update items set display_name=$1 where id=$2 and purchase_id=$3 and household_id=$4",
+        [item.name, item.id, purchaseId, actor.householdId],
+      );
+    const oldEvents = (
+      await tx.query<{
+        id: string;
+        kind: "return" | "warranty";
+        status: string;
+        dueDate: string | null;
+        sourceFactIds: string[];
+      }>(
+        `select id,kind,status,due_date::text as "dueDate",source_fact_ids as "sourceFactIds" from lifecycle_events where purchase_id=$1 and household_id=$2 and status<>'superseded' for update`,
+        [purchaseId, actor.householdId],
+      )
+    ).rows;
+    for (const event of result.events) {
+      const old = oldEvents.find((e) => e.kind === event.kind)!;
+      if (
+        old.status === event.status &&
+        old.dueDate === event.dueDate &&
+        JSON.stringify(old.sourceFactIds) ===
+          JSON.stringify(event.sourceFactIds)
+      )
+        continue;
+      await tx.query(
+        "update lifecycle_events set status='superseded' where id=$1 and household_id=$2",
+        [old.id, actor.householdId],
+      );
+      const eid = randomUUID();
+      await tx.query(
+        `insert into lifecycle_events(id,household_id,purchase_id,kind,status,due_date,timezone,source_fact_ids,rule_version) values($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [
+          eid,
+          actor.householdId,
+          purchaseId,
+          event.kind,
+          event.status,
+          event.dueDate,
+          event.timezone,
+          event.sourceFactIds,
+          event.ruleVersion,
+        ],
+      );
+      const existing = new Set(before.cues.map((c) => c.id));
+      for (const cue of result.cues.filter((c) => c.kind === event.kind)) {
+        if (existing.has(cue.id))
+          await tx.query(
+            "update cues set state=$1,user_intent=$4 where idempotency_key=$2 and household_id=$3",
+            [
+              cue.state,
+              cue.id,
+              actor.householdId,
+              cue.intent ? JSON.stringify(cue.intent) : null,
+            ],
+          );
+        else
+          await tx.query(
+            `insert into cues(household_id,event_id,scheduled_for,state,idempotency_key,user_intent) values($1,$2,$3,$4,$5,$6)`,
+            [
+              actor.householdId,
+              eid,
+              cue.scheduledFor,
+              cue.state,
+              cue.id,
+              cue.intent ? JSON.stringify(cue.intent) : null,
+            ],
+          );
+      }
+    }
+    await tx.query(
+      "update purchases set version=$1 where id=$2 and household_id=$3",
+      [result.version, purchaseId, actor.householdId],
+    );
+    await tx.query(
+      "insert into private.purchase_commands(household_id,purchase_id,mutation_id,request_digest,resulting_version) values($1,$2,$3,$4,$5)",
+      [
+        actor.householdId,
+        purchaseId,
+        command.mutationId,
+        digest,
+        result.version,
+      ],
+    );
+    await tx.query(
+      "insert into audit_events(household_id,actor_id,event_type,entity_id,correlation_id) values($1,$2,'purchase_corrected',$3,$4)",
+      [actor.householdId, actor.userId, purchaseId, command.mutationId],
+    );
+    return result.version;
+  });
+  return {
+    ...(await db.transaction((tx) => getRecords(tx, actor, purchaseId)))[0],
+    appliedMutationId: command.mutationId,
+    appliedVersion,
+  };
 }
 export async function changeAttention(
   db: PGlite,
@@ -573,13 +778,13 @@ export async function changeAttention(
     if (!row) throw Error("NOT_FOUND");
     const events = (
       await tx.query<import("../../packages/domain/purchase").Lifecycle>(
-        `select kind,status,due_date::text as "dueDate",timezone,source_fact_ids as "sourceFactIds",rule_version as "ruleVersion" from lifecycle_events where purchase_id=$1 and household_id=$2`,
+        `select kind,status,due_date::text as "dueDate",timezone,source_fact_ids as "sourceFactIds",rule_version as "ruleVersion" from lifecycle_events where purchase_id=$1 and household_id=$2 and status<>'superseded'`,
         [purchaseId, actor.householdId],
       )
     ).rows;
     const cues = (
       await tx.query<import("../../packages/domain/purchase").Cue>(
-        `select c.idempotency_key as id,e.kind,c.scheduled_for::text as "scheduledFor",e.due_date::text as "dueDate",c.state from cues c join lifecycle_events e on e.id=c.event_id and e.household_id=c.household_id where e.purchase_id=$1 and c.household_id=$2`,
+        `select c.idempotency_key as id,e.kind,c.scheduled_for::text as "scheduledFor",e.due_date::text as "dueDate",c.state,c.user_intent as intent from cues c join lifecycle_events e on e.id=c.event_id and e.household_id=c.household_id where e.purchase_id=$1 and c.household_id=$2`,
         [purchaseId, actor.householdId],
       )
     ).rows;
@@ -593,13 +798,19 @@ export async function changeAttention(
     );
     for (const e of result.events)
       await tx.query(
-        `update lifecycle_events set status=$1 where purchase_id=$2 and household_id=$3 and kind=$4`,
+        `update lifecycle_events set status=$1 where purchase_id=$2 and household_id=$3 and kind=$4 and status<>'superseded'`,
         [e.status, purchaseId, actor.householdId, e.kind],
       );
     for (const c of result.cues)
       await tx.query(
-        `update cues set state=$1,scheduled_for=$2 where idempotency_key=$3 and household_id=$4`,
-        [c.state, c.scheduledFor, c.id, actor.householdId],
+        `update cues set state=$1,scheduled_for=$2,user_intent=$5 where idempotency_key=$3 and household_id=$4`,
+        [
+          c.state,
+          c.scheduledFor,
+          c.id,
+          actor.householdId,
+          c.intent ? JSON.stringify(c.intent) : null,
+        ],
       );
     await tx.query(
       `update purchases set version=$1 where id=$2 and household_id=$3`,

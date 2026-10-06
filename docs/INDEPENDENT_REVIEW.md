@@ -40,3 +40,7 @@ No actionable defect found. Review confirmed real quality/OCR execution, visible
 ## Multi-item review - 2026-10-06
 
 No active client authorization bypass found. Confirmation binds reviewed candidate IDs/names and actual source evidence, including lost-response matching. Reviewer found same-household cross-purchase item/supersedes links permitted by the initial migration. Repair binds item assertions to purchase/household, supersedes to purchase/field/item scope and enforces one successor; cross-purchase and cross-field regressions pass. Independent follow-up confirmed the repair and found no further issue. Managed migration and physical native acceptance remain open.
+
+## Correction/history review - 2026-10-06
+
+Reviewer reproduced loss of dismissal/snooze after deadline -> Unknown -> restoration. Durable versioned cue intent now survives cancellation and is selected per reminder offset; domain and PostgreSQL regressions cover the repair. Stop remains preserved. Follow-up confirmed the repair and transactional response snapshots with no remaining actionable defect. Read-only review does not establish native or managed-provider acceptance.

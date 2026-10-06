@@ -3,7 +3,7 @@
   "items": [
     {
       "key": "phase-0",
-      "display_name": "Phase 0 — Product Definition and Commercial Blueprint",
+      "display_name": "Phase 0 \u00e2\u20ac\u201d Product Definition and Commercial Blueprint",
       "type": "phase",
       "status": "completed",
       "completed_at": "2026-10-05T18:09:00+08:00",
@@ -13,53 +13,67 @@
     },
     {
       "key": "phase-1",
-      "display_name": "Phase 1 — Engineering Foundation",
+      "display_name": "Phase 1 \u00e2\u20ac\u201d Engineering Foundation",
       "type": "phase",
       "status": "in_progress",
-      "dependencies": ["phase-0"],
+      "dependencies": [
+        "phase-0"
+      ],
       "started_at": "2026-10-05T15:03:33.3608387Z"
     },
     {
       "key": "phase-2",
-      "display_name": "Phase 2 — Capture and Quality Gate",
+      "display_name": "Phase 2 \u00e2\u20ac\u201d Capture and Quality Gate",
       "type": "phase",
       "status": "planned",
-      "dependencies": ["phase-1"]
+      "dependencies": [
+        "phase-1"
+      ]
     },
     {
       "key": "phase-3",
-      "display_name": "Phase 3 — Intelligent Purchase Lifecycle",
+      "display_name": "Phase 3 \u00e2\u20ac\u201d Intelligent Purchase Lifecycle",
       "type": "phase",
       "status": "planned",
-      "dependencies": ["phase-2"]
+      "dependencies": [
+        "phase-2"
+      ]
     },
     {
       "key": "phase-4",
-      "display_name": "Phase 4 — Watch, Remind, Act",
+      "display_name": "Phase 4 \u00e2\u20ac\u201d Watch, Remind, Act",
       "type": "phase",
       "status": "planned",
-      "dependencies": ["phase-3"]
+      "dependencies": [
+        "phase-3"
+      ]
     },
     {
       "key": "phase-5",
-      "display_name": "Phase 5 — Trust, Desktop Companion, and Household Readiness",
+      "display_name": "Phase 5 \u00e2\u20ac\u201d Trust, Desktop Companion, and Household Readiness",
       "type": "phase",
       "status": "planned",
-      "dependencies": ["phase-4"]
+      "dependencies": [
+        "phase-4"
+      ]
     },
     {
       "key": "phase-6",
-      "display_name": "Phase 6 — Closed Alpha",
+      "display_name": "Phase 6 \u00e2\u20ac\u201d Closed Alpha",
       "type": "phase",
       "status": "planned",
-      "dependencies": ["phase-5"]
+      "dependencies": [
+        "phase-5"
+      ]
     },
     {
       "key": "phase-7",
-      "display_name": "Phase 7 — Commercial Beta / V1",
+      "display_name": "Phase 7 \u00e2\u20ac\u201d Commercial Beta / V1",
       "type": "phase",
       "status": "planned",
-      "dependencies": ["phase-6"]
+      "dependencies": [
+        "phase-6"
+      ]
     }
   ],
   "events": [
@@ -119,7 +133,10 @@
       "timestamp": "2026-10-05T15:03:33.3708331Z",
       "title": "Synthetic local foundation and receipt-to-lifecycle slice implemented; roadmap gates remain open",
       "actor": "Development",
-      "evidence": ["docs/VALIDATION.md", "CURRENT_STATUS.md"],
+      "evidence": [
+        "docs/VALIDATION.md",
+        "CURRENT_STATUS.md"
+      ],
       "limitations": [
         "No native hardware verification",
         "No managed auth/storage/staging activation",
@@ -275,6 +292,25 @@
         "Labeled synthetic candidates only",
         "No inferred item coverage, quantity or line price",
         "Managed/native/calibration and dependency gates remain open"
+      ]
+    },
+    {
+      "event_id": "cuevaro-correction-rescheduling-history",
+      "timestamp": "2026-10-06T11:47:50.256610+00:00",
+      "date": "2026-10-06",
+      "actor": "Development",
+      "event_type": "implementation",
+      "title": "Immutable corrections, durable offline replay and preserved reminder intent",
+      "evidence": [
+        "tests/corrections.test.ts",
+        "tests/e2e/mobile.spec.ts",
+        "docs/VALIDATION.md",
+        "docs/INDEPENDENT_REVIEW.md"
+      ],
+      "limitations": [
+        "Synthetic local acceptance only",
+        "Live migration/native devices unverified",
+        "Managed access and dependency gates remain open"
       ]
     }
   ]

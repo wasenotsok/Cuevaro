@@ -1,4 +1,5 @@
 import { getRecords } from "./records";
+import { correctionSchema } from "../../packages/domain/corrections";
 import Fastify from "fastify";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
@@ -14,6 +15,7 @@ import {
   runOneJob,
   assertActor,
   changeAttention,
+  correctPurchase,
 } from "./development";
 import { fields } from "../../packages/domain/purchase";
 import { itemChoicesSchema } from "../../packages/domain/review-items";
@@ -173,7 +175,19 @@ export async function buildApi(
       );
     },
   );
-  app.get("/v1/records", () => getRecords(db, developmentActor));
+  app.get("/v1/records", () =>
+    db.transaction((tx) => getRecords(tx, developmentActor)),
+  );
+  app.post<{ Params: { id: string } }>(
+    "/v1/purchases/:id/corrections",
+    async (req) =>
+      correctPurchase(
+        db,
+        developmentActor,
+        z.uuid().parse(req.params.id),
+        correctionSchema.parse(req.body),
+      ),
+  );
   return app;
 }
 if (process.argv[1]?.endsWith("server.ts")) {

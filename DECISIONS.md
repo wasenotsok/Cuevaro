@@ -210,3 +210,9 @@ One receipt can contain up to ten distinct photos with a 20 MB aggregate byte li
 **Date:** 2026-10-06
 
 Up to twenty explicit labeled item candidates require individual track/skip review. Repeated names remain separate uncertain candidates; do not infer quantity or merge them automatically. Corrected names preserve original observations, evidence/page provenance and authority type. Reuse items and fact_assertions with scoped item links rather than competing storage; enforce same purchase/household/item/field history and one successor. Shared receipt deadlines do not establish item-specific coverage. Unlabeled purchase-line extraction and quantities/prices remain future V1 work.
+
+## D-027 - Immutable corrections and explicit reminder intent
+**Status:** Local synthetic implementation; managed/native acceptance open
+**Date:** 2026-10-06
+
+Reuse fact_assertions supersedes chains and source observations; corrections never rewrite evidence or extraction. Require a purchase version and UUID mutation receipt with canonical payload digest; exact replay returns the applied version separately from the latest coherent snapshot. Date changes supersede lifecycle versions and cancel obsolete cues atomically. Preserve explicit Stop and versioned dismiss/snooze intent even through Unknown; never revive stopped reminders. Retain local queued commands before upload, show last confirmed facts while pending, and require an authoritative refresh before discarding a queue. No provider migration/deployment is implied.

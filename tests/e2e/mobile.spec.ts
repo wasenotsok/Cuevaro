@@ -1,7 +1,143 @@
 import { test, expect } from "@playwright/test";
 import sharp from "sharp";
 import { readFileSync } from "node:fs";
+import { syntheticReceiptSvg } from "../../packages/test-fixtures/receipt";
 import { syntheticPdf } from "../../packages/test-fixtures/pdf";
+test("correction survives offline restart and lost acknowledgement, records history and respects stopped reminders", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page
+    .getByRole("button", { name: "Open synthetic development preview" })
+    .click();
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Choose photo", exact: true }).click();
+  await (
+    await chooser
+  ).setFiles({
+    name: "synthetic-correction.png",
+    mimeType: "image/png",
+    buffer: await sharp(
+      Buffer.from(
+        syntheticReceiptSvg().replace(
+          "Synthetic Appliances",
+          "Synthetic Correction Shop",
+        ),
+      ),
+    )
+      .png()
+      .toBuffer(),
+  });
+  await page.getByRole("button", { name: "Use anyway", exact: true }).click();
+  await expect(page.getByLabel("Return deadline", { exact: true })).toHaveValue(
+    "2026-10-19",
+    { timeout: 60000 },
+  );
+  for (const name of [
+    "Confirm purchase date",
+    "Confirm total",
+    "Confirm return deadline",
+    "Track warranty",
+  ])
+    await page.getByRole("button", { name, exact: true }).click();
+  await page.getByRole("button", { name: "Save purchase & cues" }).click();
+  await page
+    .getByRole("button", { name: "Correct return deadline", exact: true })
+    .click();
+  await page.getByLabel("Corrected value").fill("2026-10-21");
+  await page.route("**/corrections", (route) => route.abort());
+  await page
+    .getByRole("button", { name: "Save correction & update reminders" })
+    .click();
+  await expect(
+    page.getByText("Correction waiting to sync", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText(/Return deadline: 2026-10-19/)).toBeVisible();
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Open synthetic development preview" })
+    .click();
+  await page.getByRole("button", { name: "Review queued correction" }).click();
+  await page.unroute("**/corrections");
+  await page.route("**/corrections", async (route) => {
+    await route.fetch();
+    await route.abort();
+  });
+  await page.getByRole("button", { name: "Retry queued correction" }).click();
+  await expect(
+    page.getByText("Correction waiting to sync", { exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Open synthetic development preview" })
+    .click();
+  await page.getByRole("button", { name: "Review queued correction" }).click();
+  await page.unroute("**/corrections");
+  await page.getByRole("button", { name: "Retry queued correction" }).click();
+  await expect(page.getByText(/Return deadline: 2026-10-21/)).toBeVisible();
+  await expect(
+    page.getByText("Correction waiting to sync", { exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "View correction history" }).click();
+  await expect(
+    page.getByText("Return deadline: 2026-10-19 — Earlier", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Return deadline: 2026-10-21 — Current", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Correct tracked item 1" }).click();
+  await page.getByLabel("Corrected value").fill("Recovered kettle");
+  await page
+    .getByRole("button", { name: "Save correction & update reminders" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Recovered kettle", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Timeline", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Stop return reminders", exact: true })
+    .first()
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Stop return reminders", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Things", exact: true }).click();
+  await page.getByRole("button", { name: "Open saved purchase" }).click();
+  await page
+    .getByRole("button", { name: "Correct return deadline", exact: true })
+    .click();
+  await page.getByLabel("Corrected value").fill("2026-10-23");
+  await page
+    .getByRole("button", { name: "Save correction & update reminders" })
+    .click();
+  await expect(
+    page.getByText(/Return deadline: 2026-10-23.*Reminders stopped/),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "View correction history" }).click();
+  await page
+    .getByText("Correction history", { exact: true })
+    .scrollIntoViewIfNeeded();
+  await page.screenshot({ path: ".local/correction-history.png" });
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Open synthetic development preview" })
+    .click();
+  await page.getByRole("button", { name: "Timeline", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Stop return reminders", exact: true }),
+  ).toHaveCount(0);
+  const saved = await page.evaluate(async () => {
+    const res = await fetch("http://127.0.0.1:4329/v1/records", {
+      headers: { "X-Cuevaro-Development": "synthetic-only" },
+    });
+    return res.json();
+  });
+  expect(saved).toHaveLength(1);
+  expect(
+    saved[0].history.filter((f: { field: string }) => f.field === "returnDate"),
+  ).toHaveLength(3);
+  expect(saved[0].itemHistory).toHaveLength(2);
+});
 test("multi-item review requires explicit choices and preserves corrected names and sources after lost response/reload", async ({
   page,
 }) => {
@@ -70,7 +206,7 @@ test("multi-item review requires explicit choices and preserves corrected names 
     .getByRole("button", { name: "Open saved purchase", exact: true })
     .click();
   await expect(
-    page.getByText("Corrected by you — Item: Electric kettle", { exact: true }),
+    page.getByText(/Corrected by you.*Item: Electric kettle/).first(),
   ).toBeVisible();
   await expect(
     page.getByText(/Item-specific warranty coverage remains unverified/),

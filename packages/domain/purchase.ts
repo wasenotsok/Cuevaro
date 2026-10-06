@@ -98,6 +98,7 @@ export type Cue = {
   scheduledFor: string;
   dueDate: string;
   state: "scheduled" | "delivered" | "dismissed" | "cancelled";
+  intent?: { type: "dismiss" | "snooze"; version: number; date?: string };
 };
 export function validValue(field: Field, value: string | null): boolean {
   if (value === null) return true;

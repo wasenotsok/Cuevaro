@@ -23,9 +23,14 @@ import { pick, preserve, inspect, cleanupCaptureCache } from "./capture";
 import { capturePages, assemblePage } from "./pages";
 import {
   reviewItems,
+  initialItemFacts,
   type ItemChoice,
 } from "../../packages/domain/review-items";
 import { copy } from "./strings";
+import {
+  correctRecord,
+  type Correction,
+} from "../../packages/domain/corrections";
 import {
   extractText,
   confirm,
@@ -120,6 +125,11 @@ export default function App() {
     [preview, setPreview] = useState(false),
     [previewPageId, setPreviewPageId] = useState<string>(),
     [development, setDevelopment] = useState(false);
+  const [correction, setCorrection] = useState<{
+      purchaseId: string;
+      command: Correction;
+    }>(),
+    [historyVisible, setHistoryVisible] = useState(false);
   async function reload(s = store) {
     if (!s) return;
     setCaptures(await s.captures());
@@ -465,6 +475,12 @@ export default function App() {
           captureId: capture.id,
           facts,
           items: reviewedItems,
+          history: facts,
+          itemHistory: initialItemFacts(
+            reviewedItems,
+            "local-development-user",
+            now,
+          ),
           ...derive(facts, "Asia/Manila", id),
           createdAt: now,
           version: 1,
@@ -498,6 +514,8 @@ export default function App() {
     setBusy(true);
     setError("");
     try {
+      if (record.pendingCorrection)
+        throw Error("Resolve the queued correction before changing reminders.");
       const original = captures.find((c) => c.id === record.captureId);
       if (!original)
         throw Error("Original evidence is unavailable on this device.");
@@ -524,9 +542,9 @@ export default function App() {
             throw Error("RECOVERY_UNAVAILABLE");
           updated = {
             ...record,
-            events: latest.events,
-            cues: latest.cues,
-            version: latest.version,
+            ...latest,
+            captureId: record.captureId,
+            serverCaptureId: record.serverCaptureId,
           };
           recovered = true;
           applied =
@@ -562,6 +580,113 @@ export default function App() {
     } catch {
       setError(
         "Could not update this reminder. It remains saved; try again after reconnecting.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  function startCorrection(record: RecordCache, field: Field, itemId?: string) {
+    if (record.pendingCorrection) return;
+    const value = itemId
+      ? record.items?.find((i) => i.id === itemId)?.name
+      : record.facts.find((f) => f.field === field)?.value;
+    setCorrection({
+      purchaseId: record.id,
+      command: {
+        mutationId: Crypto.randomUUID(),
+        version: record.version,
+        field,
+        value: value ?? null,
+        ...(itemId ? { itemId } : {}),
+      },
+    });
+  }
+  async function applyCorrection(record: RecordCache, command: Correction) {
+    if (!store) return;
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const original = captures.find((c) => c.id === record.captureId);
+      if (!original) throw Error("Original unavailable.");
+      if (
+        record.pendingCorrection &&
+        record.pendingCorrection.mutationId !== command.mutationId
+      )
+        throw Error("Resolve the existing queued correction first.");
+      let updated: RecordCache;
+      if (record.serverCaptureId) {
+        const pending = { ...record, pendingCorrection: command };
+        await store.saveRecord(pending, original);
+        await reload();
+        if (selected?.id === record.id) setSelected(pending);
+        const result = await request(
+          `/v1/purchases/${record.id}/corrections`,
+          command,
+        );
+        if (result.appliedMutationId !== command.mutationId)
+          throw Error("CORRECTION_ACK_MISMATCH");
+        updated = {
+          ...record,
+          ...result,
+          captureId: record.captureId,
+          serverCaptureId: record.serverCaptureId,
+          pendingCorrection: undefined,
+        };
+      } else
+        updated = correctRecord(
+          record,
+          command,
+          "local-development-user",
+          new Date().toISOString(),
+          Crypto.randomUUID,
+        );
+      await store.saveRecord(updated, original);
+      await reload();
+      if (selected?.id === record.id) setSelected(updated);
+      setCorrection(undefined);
+      setMessage(
+        "Correction saved with history. Supported reminder dates updated; stopped reminders stay stopped.",
+      );
+    } catch (e) {
+      setError(
+        e instanceof Error && e.message === "STATE_CONFLICT"
+          ? "Saved facts changed elsewhere. Refresh and review before correcting again. Your queued correction is retained."
+          : "Correction is not confirmed. Any queued draft is safe on this device; retry after reconnecting. Saved facts and original evidence are retained.",
+      );
+      await reload();
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function discardQueuedCorrection(record: RecordCache) {
+    if (!store || !record.serverCaptureId) return;
+    setBusy(true);
+    setError("");
+    try {
+      const latest: RecordCache[] = await request("/v1/records"),
+        saved = latest.find(
+          (r) => r.id === record.id && r.captureId === record.serverCaptureId,
+        ),
+        original = captures.find((c) => c.id === record.captureId);
+      if (!saved || !original) throw Error("RECOVERY_UNAVAILABLE");
+      const updated = {
+        ...record,
+        ...saved,
+        captureId: record.captureId,
+        serverCaptureId: record.serverCaptureId,
+        pendingCorrection: undefined,
+      };
+      await store.saveRecord(updated, original);
+      await reload();
+      setSelected(updated);
+      setCorrection(undefined);
+      setMessage(
+        "Current facts refreshed. Queued draft cleared; previously committed changes remain in history.",
+      );
+    } catch {
+      setError(
+        "Could not refresh saved facts. The queued correction is retained.",
       );
     } finally {
       setBusy(false);
@@ -692,6 +817,8 @@ export default function App() {
               primary={tab === t}
               onPress={() => {
                 setTab(t);
+                setHistoryVisible(false);
+                setCorrection(undefined);
                 setCapture(undefined);
                 setDraft(undefined);
                 setSelected(undefined);
@@ -1106,17 +1233,22 @@ export default function App() {
                   "Purchase",
               )}
               {text(copy.local)}
-              {selected.items?.some(
-                (item) => item.candidateId !== "single-item",
-              ) ? (
+              {selected.items?.length ? (
                 <>
                   {title("Tracked items")}
-                  {selected.items.map((item) => (
+                  {selected.items.map((item, i) => (
                     <View key={item.id}>
                       {text(item.name)}
                       {text(
-                        `${item.authority === "user_entered" ? "Corrected by you" : "Confirmed by you"} — ${item.observation.excerpt}`,
+                        `${item.authority === "user_entered" ? "Corrected by you" : "Confirmed by you"} - ${item.observation.excerpt}`,
                       )}
+                      <Button
+                        label={`Correct tracked item ${i + 1}`}
+                        disabled={!!selected.pendingCorrection}
+                        onPress={() =>
+                          startCorrection(selected, "item", item.id)
+                        }
+                      />
                     </View>
                   ))}
                   {text(
@@ -1124,19 +1256,144 @@ export default function App() {
                   )}
                 </>
               ) : null}
-              {selected.facts.map((f) => (
-                <View key={f.id} style={styles.fact}>
-                  <Text style={[styles.subtitle, { color: p.text }]}>
-                    {labels[f.field]}
-                  </Text>
-                  {text(f.value ?? "Unknown")}
+              {selected.facts
+                .filter((f) => f.field !== "item" || !selected.items?.length)
+                .map((f) => (
+                  <View key={f.id} style={styles.fact}>
+                    <Text style={[styles.subtitle, { color: p.text }]}>
+                      {labels[f.field]}
+                    </Text>
+                    {text(f.value ?? "Unknown")}
+                    {text(
+                      f.value
+                        ? `${f.authority === "user_entered" ? "Entered by you" : "Confirmed by you"} · ${f.observation.excerpt || "Manual review"}`
+                        : "No supported value",
+                    )}
+                    <Button
+                      label={`Correct ${labels[f.field].toLowerCase()}`}
+                      disabled={!!selected.pendingCorrection}
+                      onPress={() => startCorrection(selected, f.field)}
+                    />
+                  </View>
+                ))}
+              {selected.pendingCorrection ? (
+                <View>
+                  {title("Correction waiting to sync")}
                   {text(
-                    f.value
-                      ? `${f.authority === "user_entered" ? "Entered by you" : "Confirmed by you"} · ${f.observation.excerpt || "Manual review"}`
-                      : "No supported value",
+                    `${labels[selected.pendingCorrection.field]} draft: ${selected.pendingCorrection.value ?? "Unknown"}. Showing last confirmed facts; the queued value is not yet confirmed on this device.`,
                   )}
+                  <Button
+                    label="Retry queued correction"
+                    primary
+                    onPress={() =>
+                      applyCorrection(selected, selected.pendingCorrection!)
+                    }
+                  />
+                  <Button
+                    label="Discard queued correction & refresh facts"
+                    onPress={() => discardQueuedCorrection(selected)}
+                  />
                 </View>
-              ))}
+              ) : correction?.purchaseId === selected.id ? (
+                <View>
+                  {title(
+                    `Correct ${labels[correction.command.field].toLowerCase()}`,
+                  )}
+                  {text(
+                    "The original observation and earlier confirmed values stay in history. Only supported dates create cues; stopped reminders stay stopped.",
+                  )}
+                  <TextInput
+                    accessibilityLabel="Corrected value"
+                    value={correction.command.value ?? ""}
+                    onChangeText={(value) =>
+                      setCorrection({
+                        ...correction,
+                        command: {
+                          ...correction.command,
+                          value: value.trim() ? value : null,
+                        },
+                      })
+                    }
+                    placeholder="Unknown"
+                    placeholderTextColor={p.muted}
+                    style={[
+                      styles.input,
+                      { color: p.text, borderColor: p.muted },
+                    ]}
+                  />
+                  {!correction.command.itemId ? (
+                    <Button
+                      label="Set corrected fact to Unknown"
+                      onPress={() =>
+                        setCorrection({
+                          ...correction,
+                          command: { ...correction.command, value: null },
+                        })
+                      }
+                    />
+                  ) : null}
+                  <Button
+                    label="Save correction & update reminders"
+                    primary
+                    onPress={() =>
+                      applyCorrection(selected, correction.command)
+                    }
+                    disabled={
+                      correction.command.itemId
+                        ? correction.command.value ===
+                            selected.items?.find(
+                              (i) => i.id === correction.command.itemId,
+                            )?.name || !correction.command.value
+                        : correction.command.value ===
+                          selected.facts.find(
+                            (f) => f.field === correction.command.field,
+                          )?.value
+                    }
+                  />
+                  <Button
+                    label="Cancel correction draft"
+                    onPress={() => setCorrection(undefined)}
+                  />
+                </View>
+              ) : null}
+              <Button
+                label={
+                  historyVisible
+                    ? "Hide correction history"
+                    : "View correction history"
+                }
+                onPress={() => setHistoryVisible(!historyVisible)}
+              />
+              {historyVisible ? (
+                <View>
+                  {title("Correction history")}
+                  {[
+                    ...(selected.history ?? selected.facts),
+                    ...(selected.itemHistory ?? []),
+                  ]
+                    .filter(
+                      (f) =>
+                        f.supersedesId ||
+                        [
+                          ...(selected.history ?? []),
+                          ...(selected.itemHistory ?? []),
+                        ].some((n) => n.supersedesId === f.id),
+                    )
+                    .map((f) => (
+                      <View key={f.id}>
+                        {text(
+                          `${labels[f.field]}: ${f.value ?? "Unknown"} — ${[...selected.facts, ...(selected.items ?? []).map((i) => ({ id: i.factId }))].some((n) => n.id === f.id) ? "Current" : "Earlier"}`,
+                        )}
+                        {text(
+                          `${f.authority === "user_entered" ? "Entered by you" : "Confirmed by you"} · ${new Date(f.confirmedAt).toLocaleString()}`,
+                        )}
+                        {text(
+                          `Original source: ${f.observation.excerpt || "Manual review; no extracted support"}`,
+                        )}
+                      </View>
+                    ))}
+                </View>
+              ) : null}
               {title("What Cuevaro is watching")}
               {selected.events.map((e) => (
                 <View key={e.kind}>
@@ -1147,8 +1404,10 @@ export default function App() {
               ))}
               {text(
                 "In-app cue dates: " +
-                  (selected.cues.map((c) => c.scheduledFor).join(", ") ||
-                    "None — no dates invented"),
+                  (selected.cues
+                    .filter((c) => ["scheduled", "delivered"].includes(c.state))
+                    .map((c) => c.scheduledFor)
+                    .join(", ") || "None — no dates invented"),
               )}
               <Button
                 label={copy.source}
@@ -1168,6 +1427,21 @@ export default function App() {
                 : copy.quiet,
             )}
             {text("Push delivery is not enabled.")}
+            {records
+              .filter((r) => r.pendingCorrection)
+              .map((r) => (
+                <View key={r.id}>
+                  {text("A saved correction is waiting to sync.")}
+                  <Button
+                    label="Review queued correction"
+                    onPress={() => {
+                      setSelected(r);
+                      setTab("Things");
+                      setCorrection(undefined);
+                    }}
+                  />
+                </View>
+              ))}
             {cues
               .filter((c) => c.scheduledFor <= today)
               .map((c) => (

@@ -34,7 +34,24 @@ export type ReviewedItem = {
   candidateId: string;
   observation: Observation;
   authority: "user_confirmed" | "user_entered";
+  factId?: string;
 };
+export function initialItemFacts(
+  items: ReviewedItem[],
+  actorId: string,
+  now: string,
+) {
+  return items.map((item) => ({
+    id: item.factId!,
+    itemId: item.id,
+    field: "item" as const,
+    value: item.name,
+    observation: item.observation,
+    authority: item.authority,
+    actorId,
+    confirmedAt: now,
+  }));
+}
 export function reviewItems(
   draft: Draft,
   choices: ItemChoice[] | undefined,
@@ -48,6 +65,7 @@ export function reviewItems(
     return [
       {
         id: id(),
+        factId: id(),
         name: singleName ?? "Purchase",
         candidateId: "single-item",
         observation,
@@ -70,6 +88,7 @@ export function reviewItems(
       : [
           {
             id: id(),
+            factId: id(),
             name: choice.name,
             candidateId: candidate.id,
             observation: candidate.observation,
