@@ -32,3 +32,7 @@ Reviewer found named/year-first/unambiguous numeric dates deterministic and cons
 ## Multi-page photo review - 2026-10-06
 
 Reviewer found three defects: assembly changed the root hash and broke first-original deduplication; whole-bundle authorization permitted later pages after revocation during the first; and a sealed/uploaded standalone capture could be rebound into another receipt. Repairs compare retained original hashes, authorize before each extraction and reject sealed/server-backed/drafted attachment candidates. Browser reimport-after-confirmation, integration revocation-after-page-one and negative candidate regressions cover the repairs. Independent follow-up confirmed all three and found no further consequential defect. Review also assessed atomic writes, ordered manifests, source binding and retained replacements. This is read-only source review, not live-provider or physical-native acceptance.
+
+## Synthetic evaluation and legacy migration review - 2026-10-06
+
+No actionable defect found. Review confirmed real quality/OCR execution, visible skips/wrong candidates and conservative Unknown checks. Zero high-confidence errors is the enforced confidence-cap regression, not statistical calibration; the duplicate evaluation measures hashes/OCR rather than storage deduplication. Migration coverage is reconstructed in-memory legacy schema with exact original preservation, constraints and tenant reads, not live provider/restore evidence.

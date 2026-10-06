@@ -75,6 +75,8 @@ Independent contribution, 2026-10-06: local embedded-text PDF import supports up
 
 Multi-page photo contribution, 2026-10-06: ordered append/replace preserves separate originals and earlier replacements, requires per-page quality review and seals bundle identity before uploading. Up to ten photos/20 MB total share one receipt lifecycle with actual per-page OCR/provenance and Unknown on conflicting evidence. Atomic failure, lost acknowledgement/restart, original reimport and between-page revocation are covered locally. Native camera/storage and representative capture gates remain open.
 
+Quality-to-extraction evaluation, 2026-10-06: eleven generated cases now report real OCR after quality gating, including blocked cases, per-field mismatches/Unknowns and local latency. Glare still produced a wrong low-confidence merchant. This is a reproducible synthetic regression corpus, not representative calibration or acceptance thresholds.
+
 Goal: make capture faster and safer than manual entry.
 
 Scope:

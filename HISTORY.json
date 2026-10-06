@@ -238,6 +238,25 @@
         "Native hardware and live migration unverified",
         "Phase 1 and dependency gates remain open"
       ]
+    },
+    {
+      "event_id": "cuevaro-synthetic-extraction-evaluation",
+      "timestamp": "2026-10-06T11:06:15.6119827Z",
+      "date": "2026-10-06",
+      "actor": "Development",
+      "event_type": "validation",
+      "title": "Versioned ugly-input real OCR evaluation and original-preserving legacy page migration regression",
+      "evidence": [
+        "tests/extraction-benchmark.test.ts",
+        "tests/capture-pages.test.ts",
+        "docs/VALIDATION.md"
+      ],
+      "limitations": [
+        "Generated corpus is not calibrated or representative",
+        "Glare produced a wrong low-confidence merchant",
+        "Legacy migration tested in memory, not live Supabase",
+        "Phase 1 and dependency gates remain open"
+      ]
     }
   ]
 }

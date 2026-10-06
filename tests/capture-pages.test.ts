@@ -1,6 +1,6 @@
 import { it, expect } from "vitest";
 import { createHash, randomUUID } from "node:crypto";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import sharp from "sharp";
 import { pageManifest, pagesQuality } from "../packages/domain/capture-pages";
 import { assemblePage, capturePages } from "../apps/mobile/pages";
@@ -109,6 +109,72 @@ it("bounds active pages/bytes and rejects repeated originals", () => {
       Array(11).fill(1),
     ),
   ).toThrow("INVALID_PAGE_BUNDLE");
+});
+it("upgrades a legacy single-original fixture without changing bytes or weakening page constraints and tenant reads", async () => {
+  const db = await openDevelopmentDb();
+  try {
+    const original = await sharp(
+      Buffer.from(receiptPageSvg(receiptPhotoPages[0], 1)),
+    )
+      .png()
+      .toBuffer();
+    const c = await createPageCapture(
+      db,
+      actor,
+      randomUUID(),
+      [original],
+      true,
+    );
+    // Reconstruct pre-004 schema only in this disposable in-memory synthetic database.
+    await db.exec(
+      "drop index evidence_page_order; alter table evidence_objects drop column page_number;",
+    );
+    const before = (
+      await db.query<{ id: string; original: Uint8Array; sha256: string }>(
+        "select e.id,e.sha256,b.original from evidence_objects e join private.evidence_bytes b on b.evidence_id=e.id",
+      )
+    ).rows[0];
+    await db.exec(
+      readFileSync(
+        "supabase/migrations/202610060004_evidence_pages.sql",
+        "utf8",
+      ),
+    );
+    const after = (
+      await db.query<{
+        id: string;
+        original: Uint8Array;
+        sha256: string;
+        page_number: number;
+      }>(
+        "select e.id,e.sha256,e.page_number,b.original from evidence_objects e join private.evidence_bytes b on b.evidence_id=e.id",
+      )
+    ).rows[0];
+    expect(after.id).toBe(before.id);
+    expect(after.sha256).toBe(before.sha256);
+    expect(
+      Buffer.from(after.original).equals(Buffer.from(before.original)),
+    ).toBe(true);
+    expect(after.page_number).toBe(1);
+    const insert = `insert into evidence_objects(id,household_id,capture_id,storage_key,mime_type,byte_size,sha256,page_number) select gen_random_uuid(),household_id,capture_id,storage_key||'-duplicate',mime_type,byte_size,sha256,$1 from evidence_objects where capture_id=$2`;
+    for (const page of [1, 0, 11])
+      await expect(db.query(insert, [page, c.id])).rejects.toThrow();
+    await db.exec("set role authenticated;");
+    await db.query("select set_config('request.jwt.claim.sub',$1,false)", [
+      actor.userId,
+    ]);
+    expect(
+      (await db.query("select * from evidence_objects")).rows,
+    ).toHaveLength(1);
+    await db.query("select set_config('request.jwt.claim.sub',$1,false)", [
+      randomUUID(),
+    ]);
+    expect(
+      (await db.query("select * from evidence_objects")).rows,
+    ).toHaveLength(0);
+  } finally {
+    await db.close();
+  }
 });
 it("keeps competing photo-page deadlines and malformed monetary evidence Unknown with both sources", () => {
   const pages = [
