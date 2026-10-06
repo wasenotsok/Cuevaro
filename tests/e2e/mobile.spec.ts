@@ -2,6 +2,43 @@ import { test, expect } from "@playwright/test";
 import sharp from "sharp";
 import { readFileSync } from "node:fs";
 import { syntheticPdf } from "../../packages/test-fixtures/pdf";
+test("mobile alternate receipt layout shows normalized dates with the original excerpt before confirmation", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page
+    .getByRole("button", { name: "Open synthetic development preview" })
+    .click();
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Choose photo", exact: true }).click();
+  await (
+    await chooser
+  ).setFiles({
+    name: "synthetic-alternate-layout.png",
+    mimeType: "image/png",
+    buffer: readFileSync(".local/receipt-layouts/layout-0.png"),
+  });
+  await page.getByRole("button", { name: "Use anyway", exact: true }).click();
+  await expect(page.getByLabel("Return deadline", { exact: true })).toHaveValue(
+    "2026-10-19",
+    { timeout: 60000 },
+  );
+  const source = page.getByText('Receipt: "Return deadline: 19 Oct 2026"', {
+    exact: true,
+  });
+  await expect(source).toBeVisible();
+  await source.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: ".local/receipt-layout-review.png" });
+  for (const name of [
+    "Confirm purchase date",
+    "Confirm total",
+    "Confirm return deadline",
+    "Track warranty",
+  ])
+    await page.getByRole("button", { name, exact: true }).click();
+  await page.getByRole("button", { name: "Save purchase & cues" }).click();
+  await expect(page.getByText(/Return deadline: 2026-10-19/)).toBeVisible();
+});
 test("mobile PDF text review retains page provenance and retrieves exact original after reload", async ({
   page,
 }) => {

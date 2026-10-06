@@ -192,3 +192,9 @@ Owner approved Supabase Free in Singapore (`ap-southeast-1`), synthetic data and
 **Date:** 2026-10-06
 
 Use official Mozilla PDF.js 6.4.299 only in the Node API workspace, with a separate process, 192 MB V8 heap, 15-second deadline, 20 MB input, ten-page, 100,000-character and bounded output limits. Disable eval/XFA/WASM/remote fetching; request text only, not scripts/annotations or rendering. This is containment, not an OS sandbox or total-memory guarantee. Preserve originals before parsing; terminalize deterministic unsupported cases. Embedded text may be hidden or differ from visible content; show that warning and require explicit continuation, then low-confidence fact review. Retain page provenance and Unknown on conflicts. No scanned-PDF OCR or native viewing claim. Parser behavior is versioned receipt-text-v2 after removing last-label-wins ambiguity.
+
+## D-024 - Explicit receipt-format normalization
+**Status:** Limited synthetic development support; calibration open
+**Date:** 2026-10-06
+
+Version receipt-text-v3 accepts explicit alternate labels, the unambiguous peso symbol, named English months, year-first dates and numeric dates whose month/day order yields only one valid interpretation. Do not use host locale or infer merchant from arbitrary headers. Ambiguous numeric dates, invalid/future purchase dates, inconsistent labels and conflicting consequential evidence stay Unknown. Equivalent repeated dates can share one candidate; preserve original excerpt and evidence association. Relative policy durations remain unsupported. Broader unlabeled/multi-item extraction remains separate.

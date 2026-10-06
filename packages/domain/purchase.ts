@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { receiptDate } from "./receipt-date";
 export const fields = [
   "merchant",
   "purchaseDate",
@@ -96,7 +97,7 @@ export function extractText(
     evidenceId,
     excerpt: "",
     source: "document_extraction",
-    version: "receipt-text-v2",
+    version: "receipt-text-v3",
     reason: "missing",
   }));
   const conflicts = new Set<Field>();
@@ -129,46 +130,61 @@ export function extractText(
           quality === "questionable" ? "capture_warning" : "requires_review",
       };
   };
+  const invalidAmounts: string[] = [];
   // Only explicit labels. Arbitrary first lines can be addresses/instructions, not merchants.
   for (const line of lines) {
-    const merchant = /^Merchant\s*:\s*(.+)$/i.exec(line);
+    const merchant = /^(?:Merchant|Sold by|Seller)\s*:\s*(.+)$/i.exec(line);
     if (merchant) set("merchant", merchant[1], line);
-    const item = /^Item\s*:\s*(.+)$/i.exec(line);
+    const item = /^(?:Item|Product)\s*:\s*(.+)$/i.exec(line);
     if (item) set("item", item[1], line);
     const total =
-      /^(?:Grand\s+)?Total\s*:?\s*([A-Z]{3})\s*(\d+(?:[,.]\d{3})*(?:\.\d{1,2})?)$/i.exec(
+      /^(?:(?:Grand\s+)?Total|Amount due)\s*:?\s*([A-Z]{3}|₱)\s*((?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d{1,2})?)$/i.exec(
         line,
       );
-    if (total) {
-      set("currency", total[1].toUpperCase(), line);
+    if (total && validValue("total", total[2].replace(/,/g, ""))) {
+      set("currency", total[1] === "₱" ? "PHP" : total[1].toUpperCase(), line);
       set("total", total[2].replace(/,/g, ""), line);
-    }
+    } else if (/^(?:(?:Grand\s+)?Total|Amount due)\b/i.test(line))
+      invalidAmounts.push(line);
   }
+  if (invalidAmounts.length)
+    for (const field of ["total", "currency"] as const) {
+      result[fields.indexOf(field)] = {
+        ...result[fields.indexOf(field)],
+        value: null,
+        confidence: "unknown",
+        excerpt: invalidAmounts.join("\n").slice(0, 400),
+        reason: "ambiguous_or_invalid_amount",
+      };
+    }
   for (const [field, label] of [
-    ["purchaseDate", "(?:Purchase date|Date)"],
+    [
+      "purchaseDate",
+      "(?:Purchase date|Transaction date|Date of purchase|Date)",
+    ],
     ["returnDate", "Return (?:by|deadline)"],
     ["warrantyDate", "Warranty (?:ends|until)"],
   ] as const) {
     const matches = lines.flatMap((line) => {
-      const m = new RegExp(
-        `^${label}\\s*:?\\s*(\\d{4}-\\d{2}-\\d{2})$`,
-        "i",
-      ).exec(line);
-      return m ? [{ value: m[1], line }] : [];
+      const m = new RegExp(`^${label}\\s*:?\\s*(.+)$`, "i").exec(line);
+      return m ? [{ value: receiptDate(m[1]), line }] : [];
     });
     if (
-      matches.length === 1 &&
-      isoDate.safeParse(matches[0].value).success &&
-      (field !== "purchaseDate" || matches[0].value <= today)
+      matches.length > 0 &&
+      matches.every(
+        (m) =>
+          m.value !== null && (field !== "purchaseDate" || m.value <= today),
+      ) &&
+      new Set(matches.map((m) => m.value)).size === 1
     )
-      set(field, matches[0].value, matches[0].line);
+      set(field, matches[0].value!, matches[0].line);
     else if (matches.length)
       result[fields.indexOf(field)].reason = "ambiguous_or_invalid_date";
   }
   return draftSchema.parse({
     observations: result,
     provider: "local-text-parser",
-    version: "receipt-text-v2",
+    version: "receipt-text-v3",
   });
 }
 export function confirm(

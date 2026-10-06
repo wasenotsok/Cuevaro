@@ -98,6 +98,8 @@ Gate:
 
 Local contribution, 2026-10-05: bundled local OCR over synthetic labeled receipts, provenance/confidence review, contextual replies and explicit supported dates/Unknown are implemented in sequence. Broad receipt/provider extraction, multi-item and policy research remain open; phase gate is not met.
 
+Independent contribution, 2026-10-06: explicit Seller/Sold by/Product/Amount due labels, peso-symbol currency and unambiguous named/year-first/numeric dates are supported with raw excerpts and conservative conflicts. Two additional synthetic layouts passed actual Tesseract checks. Unlabeled merchant inference, ambiguous numeric dates, multi-item review and representative calibration remain open; no phase gate is closed.
+
 Goal: turn evidence into a trustworthy useful record.
 
 Scope:

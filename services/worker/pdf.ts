@@ -94,7 +94,7 @@ export async function extractPdf(
   );
   return draftSchema.parse({
     provider: "pdfjs-local-text",
-    version: "pdfjs-6+receipt-text-v2",
+    version: "pdfjs-6+receipt-text-v3",
     observations: fields.map((field) => {
       const observed = drafts.map((d) =>
         d.observations.find((o) => o.field === field)!,
@@ -106,7 +106,8 @@ export async function extractPdf(
         !observed.some(
           (o) =>
             o.reason === "conflicting_document_fields" ||
-            o.reason === "ambiguous_or_invalid_date",
+            o.reason === "ambiguous_or_invalid_date" ||
+            o.reason === "ambiguous_or_invalid_amount",
         )
       ) {
         const first = candidates[0];
@@ -121,13 +122,32 @@ export async function extractPdf(
         ...observed[0],
         value: null,
         confidence: "unknown",
-        excerpt: "",
+        excerpt: observed
+          .filter(
+            (o) =>
+              o.value !== null || o.reason === "ambiguous_or_invalid_amount",
+          )
+          .map((o) => o.excerpt)
+          .filter(Boolean)
+          .join(" | ")
+          .slice(0, 400),
+        pages: observed.flatMap((o, i) =>
+          o.value !== null ||
+          o.reason === "ambiguous_or_invalid_amount" ||
+          o.reason === "ambiguous_or_invalid_date" ||
+          o.reason === "conflicting_document_fields"
+            ? [i + 1]
+            : [],
+        ),
         reason:
           values.size > 1 ||
           observed.some((o) => o.reason === "conflicting_document_fields")
             ? "conflicting_document_fields"
-            : (observed.find((o) => o.reason === "ambiguous_or_invalid_date")
-                ?.reason ?? "missing"),
+            : (observed.find(
+                (o) =>
+                  o.reason === "ambiguous_or_invalid_date" ||
+                  o.reason === "ambiguous_or_invalid_amount",
+              )?.reason ?? "missing"),
       };
     }),
   });

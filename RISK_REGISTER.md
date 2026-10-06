@@ -71,3 +71,7 @@ Cuevaro V1 is not:
 - a complete document management suite.
 
 Keeping this boundary protects time, security, and comprehension.
+
+## Synthetic extraction review checkpoint - 2026-10-06
+
+False-confidence risk remains active. Camouflaged receipt covers cannot establish complete evidence from pixels; embedded PDF text may be hidden/differ from visible pages; valid monetary lines may coexist with malformed/conflicting labeled evidence. Implemented controls: unresolved completeness/explicit continuation, visible PDF warning and low-confidence review, Unknown on competing monetary/date evidence with provenance retained. Synthetic regressions and independent review are in docs/VALIDATION.md and docs/INDEPENDENT_REVIEW.md. None establishes representative calibration or closes the risk. Native viewing/rendering, adversarial PDF corpus, managed isolation and production delivery remain unverified.

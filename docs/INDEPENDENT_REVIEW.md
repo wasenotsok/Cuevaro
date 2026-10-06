@@ -24,3 +24,7 @@ Reviewer found no actionable defect in the scoped forward permission migration a
 ## Embedded-text PDF review - 2026-10-06
 
 Reviewer found no actionable parser-execution or authority-bypass defect in the bounded data-only child process, minimal environment, conservative conflicts and original-retaining failure paths. It requested a visible warning before continuation because embedded text can be hidden/differ from visible evidence; the warning is now rendered and browser-tested, with an actual invisible-text regression remaining low-confidence/Questionable. OS-level memory isolation, adversarial corpus and native viewing remain unverified.
+
+## Alternate receipt format review - 2026-10-06
+
+Reviewer found named/year-first/unambiguous numeric dates deterministic and conservative, then reproduced valid totals masking unsupported competing monetary labels. The repair recognizes monetary labels before validation, keeps total/currency Unknown on malformed/unsupported/schema-invalid evidence, and propagates it across PDF pages with contributing provenance. Regressions cover same-page and cross-page malformed grouping, ambiguous currency symbols and oversized totals. Independent follow-up confirmed the repair; no further actionable defect found in that scope.

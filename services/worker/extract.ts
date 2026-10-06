@@ -25,7 +25,7 @@ export async function extractOriginal(
     return {
       ...draft,
       provider: "tesseract-local",
-      version: "tesseract-7+receipt-text-v2",
+      version: "tesseract-7+receipt-text-v3",
     };
   } finally {
     await worker.terminate();

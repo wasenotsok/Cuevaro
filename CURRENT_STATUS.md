@@ -38,6 +38,8 @@ Permission head `c7ac63a89b078319316ae20013ab02101d954590` separately passed all
 
 Further independent V1 work remains authorized: multi-page photo assembly, broader synthetic receipt-layout evaluation, multi-item review, correction/rescheduling history and remaining accessibility/export development. These are implementation gaps, not Owner approval blockers; service/hardware gates do not stop them.
 
+PDF head `49a61e07d7822f97359735ae77a4aa674aeef3ce` separately completed [PR CI 37449088755](https://github.com/wasenotsok/Cuevaro/actions/runs/37449088755): implementation verification passed; dependency gate failed. The next independent contribution supports explicit alternate receipt labels, peso-symbol currency and unambiguous named/year-first/numeric calendar dates. Ambiguous numeric dates, malformed grouping, unlabeled merchants, policy durations and conflicting evidence remain Unknown. Two actual OCR layout fixtures are verified; this is limited labeled parsing, not broad merchant coverage or multi-item extraction.
+
 1. Review the draft development PR and its exact CI results; resolve available dependency fixes without weakening the gate.
 2. Supabase Free in Singapore is Owner-approved for synthetic private development. Secure project access, project reference and explicitly approved developer identities are pending; no provider account, credential, paid service or staging deployment was created. The private Node API/worker hosting path remains unresolved.
 3. Produce and test native development binaries on actual Android/iOS devices; validate SQLCipher, camera quality, offline recovery, screen readers and text scaling. JavaScript/Hermes bundle export does not prove these.

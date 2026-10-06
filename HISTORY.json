@@ -218,6 +218,24 @@
         "No OS-level sandbox or representative adversarial corpus",
         "Phase 1 gates and dependency gate remain open"
       ]
+    },
+    {
+      "event_id": "cuevaro-alternate-receipt-formats",
+      "timestamp": "2026-10-06T10:30:51.7371813Z",
+      "date": "2026-10-06",
+      "actor": "Development",
+      "event_type": "implementation",
+      "title": "Explicit alternate receipt labels/date formats and conservative conflicting monetary evidence",
+      "evidence": [
+        "tests/receipt-layouts.test.ts",
+        "docs/VALIDATION.md",
+        "docs/INDEPENDENT_REVIEW.md"
+      ],
+      "limitations": [
+        "Labeled synthetic receipts only",
+        "No multi-item or unlabeled merchant inference",
+        "Phase 1 and dependency gates remain open"
+      ]
     }
   ]
 }

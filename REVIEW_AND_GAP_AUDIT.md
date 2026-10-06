@@ -173,3 +173,9 @@ That must be answered by a focused alpha/beta, not more speculative documentatio
 The local foundation and synthetic capture-to-lifecycle development slice now exist. Review and fixes include the local/server evidence-ID mismatch, lost confirmation-response recovery, immutable observation provenance, worker lease/revocation revalidation, managed-actor forgery refusal and platform-specific encrypted-storage bundling. See [validation evidence](docs/VALIDATION.md).
 
 This review does not close any release gate. In particular, the quality detector is provisional, labeled single-item OCR extraction is limited, mobile cloud sync/push is unconnected, real hardware and managed authorization/storage have not been exercised, and the dependency gate remains blocked. Future V1 work must follow the current phase gates and cannot interpret passing synthetic tests as commercial readiness.
+
+## 9. Independent synthetic implementation review - 2026-10-06
+
+Further bounded development added document-region quality advice with unresolved completeness, actual embedded-text PDF parsing/page provenance/original retrieval, explicit alternate receipt labels/date formats and conservative conflicting evidence. Independent review repaired camouflaged-edge false Good and valid amounts masking unsupported competing labels. PDF hidden text remains explicitly unverified visible evidence; rendering/scanned OCR/native viewing remain incomplete. These findings and regressions are in docs/INDEPENDENT_REVIEW.md and docs/VALIDATION.md.
+
+Independent V1 implementation remains possible without service setup: multi-page photo assembly, multi-item review, correction/rescheduling history, accessibility and development export/restore. These are ordinary engineering work; real managed-provider/native/production delivery acceptance still needs its specific external capability. Phase 1 remains in progress and the dependency gate is enforced.
