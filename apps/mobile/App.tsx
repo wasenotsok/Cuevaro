@@ -1,3 +1,5 @@
+import { recordArchive } from "./export-record";
+import { pendingExportCleanup, deliverArchive } from "./export-delivery";
 import React, { useEffect, useState } from "react";
 import {
   SafeAreaView,
@@ -100,6 +102,10 @@ async function request(path: string, body?: unknown) {
   return data;
 }
 export default function App() {
+  const [exportReady, setExportReady] = useState(false);
+  const [exportCleanup, setExportCleanup] = useState<
+    (() => void) | undefined
+  >();
   const dark = useColorScheme() === "dark",
     p = {
       background: dark ? "#14251F" : "#F5F4ED",
@@ -137,6 +143,11 @@ export default function App() {
   }
   useEffect(() => {
     if (!development) return;
+    pendingExportCleanup()
+      .then((cleanup) => setExportCleanup(() => cleanup))
+      .catch(() =>
+        setError("Could not inspect temporary exports; retry on this device."),
+      );
     openStore()
       .then(async (s) => {
         setStore(s);
@@ -631,6 +642,7 @@ export default function App() {
           ...result,
           captureId: record.captureId,
           serverCaptureId: record.serverCaptureId,
+          localExportEvents: record.localExportEvents,
           pendingCorrection: undefined,
         };
       } else
@@ -675,6 +687,7 @@ export default function App() {
         ...saved,
         captureId: record.captureId,
         serverCaptureId: record.serverCaptureId,
+        localExportEvents: record.localExportEvents,
         pendingCorrection: undefined,
       };
       await store.saveRecord(updated, original);
@@ -1410,6 +1423,86 @@ export default function App() {
                     .join(", ") || "None — no dates invented"),
               )}
               <Button
+                label="Prepare record export"
+                disabled={
+                  !!selected.pendingCorrection || busy || !!exportCleanup
+                }
+                onPress={() => setExportReady(true)}
+              />
+              {exportReady ? (
+                <View>
+                  {text(
+                    "This unencrypted ZIP contains your receipt originals, saved facts and history. Choose a trusted destination. Copies outside Cuevaro cannot be recalled. Export covers this device's saved record, not cloud backup.",
+                  )}
+                  <Button
+                    label="Export unencrypted record & originals"
+                    disabled={busy}
+                    onPress={async () => {
+                      setBusy(true);
+                      setError("");
+                      try {
+                        const bytes = await recordArchive(
+                          selected,
+                          await store!.captures(),
+                          async (data) =>
+                            Array.from(
+                              new Uint8Array(
+                                await Crypto.digest(
+                                  Crypto.CryptoDigestAlgorithm.SHA256,
+                                  data as Uint8Array<ArrayBuffer>,
+                                ),
+                              ),
+                              (v) => v.toString(16).padStart(2, "0"),
+                            ).join(""),
+                        );
+                        const originals = await store!.captures();
+                        const root = originals.find(
+                          (c) => c.id === selected.captureId,
+                        );
+                        if (!root) throw Error("MISSING_ORIGINAL");
+                        const audited = {
+                          ...selected,
+                          localExportEvents: [
+                            ...(selected.localExportEvents ?? []),
+                            {
+                              id: Crypto.randomUUID(),
+                              requestedAt: new Date().toISOString(),
+                            },
+                          ],
+                        };
+                        await store!.saveRecord(audited, root);
+                        setSelected(audited);
+                        setRecords(await store!.records());
+                        const cleanup = await deliverArchive(bytes);
+                        setExportCleanup(() => cleanup);
+                        setExportReady(false);
+                        setMessage(
+                          cleanup
+                            ? "Export destination chooser closed. A temporary unencrypted copy remains on this device until you remove it. This does not confirm delivery."
+                            : "Export download requested. Check your browser downloads; this does not confirm delivery.",
+                        );
+                      } catch {
+                        try {
+                          const cleanup = await pendingExportCleanup();
+                          setExportCleanup(() => cleanup);
+                        } catch {
+                          /* Existing warning retains cleanup uncertainty. */
+                        }
+                        setError(
+                          "Export could not complete. Resolve any queued correction and check that every original is available. Saved records remain unchanged.",
+                        );
+                      } finally {
+                        setBusy(false);
+                      }
+                    }}
+                  />
+                  <Button
+                    label="Cancel export"
+                    onPress={() => setExportReady(false)}
+                  />
+                </View>
+              ) : null}
+              <Button
                 label={copy.source}
                 onPress={() => setPreview(!preview)}
               />
@@ -1419,6 +1512,27 @@ export default function App() {
               />
             </>,
           )}
+        {exportCleanup ? (
+          <View>
+            {text(
+              "A temporary unencrypted export remains in this app's cache. Removal here cannot delete copies saved to another app.",
+            )}
+            <Button
+              label="Remove temporary export from this device"
+              onPress={() => {
+                try {
+                  exportCleanup();
+                  setExportCleanup(undefined);
+                  setMessage("Temporary export removed from this device.");
+                } catch {
+                  setError(
+                    "Temporary export cleanup failed; retry on this device.",
+                  );
+                }
+              }}
+            />
+          </View>
+        ) : null}
         {!capture && !selected && tab === "Home" && (
           <>
             {title(

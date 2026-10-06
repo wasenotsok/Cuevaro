@@ -222,3 +222,9 @@ Reuse fact_assertions supersedes chains and source observations; corrections nev
 **Date:** 2026-10-06
 
 Reuse tenant authorization and transactional record snapshots. Export structured JSON/history plus separate originals with SHA-256/page/MIME metadata, compare the full ordered capture identity and reject partial/corrupt evidence. Create a fresh UUID directory under ignored .local/exports with exclusive files and immediate verification; no external upload, public endpoint or overwrite. Local PGlite dump/load tests preserve original/history/replay/Stop state; distinguish that from managed backups, native export UX and JSON reimport.
+
+## D-029 - Explicit on-device plaintext archive export
+**Status:** Local implementation; native hardware acceptance open
+**Date:** 2026-10-06
+
+Use a bounded uncompressed ZIP (fflate) and SDK-matched Expo sharing, preserving JSON facts/history/cues and exact local current/retained originals. Require explicit plaintext/destination/copy consequences, verify original hashes and ordered capture identity, and refuse queued corrections. Record request-only metadata in the existing aggregate cache; preserve it across server corrections. Retain owned native cache ZIPs until explicit cleanup because Android destinations may read after chooser resolution. Rediscover owned files after restart; do not delete unrelated captures or claim recall of external copies. No new server/public export or cloud backup claim.

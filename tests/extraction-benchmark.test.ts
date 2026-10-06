@@ -52,6 +52,46 @@ it("measures the quality-gated real OCR pipeline over ugly synthetic inputs with
     )
       .png()
       .toBuffer(),
+    monospace: await sharp(
+      Buffer.from(
+        syntheticReceiptSvg().replaceAll(
+          'font-family="Arial"',
+          'font-family="monospace"',
+        ),
+      ),
+    )
+      .png()
+      .toBuffer(),
+    jpeg_artifacts: await sharp(original).jpeg({ quality: 15 }).toBuffer(),
+    conflicting_deadline: await sharp(
+      Buffer.from(
+        syntheticReceiptSvg().replace(
+          "Not a real purchase",
+          "Return by: 2026-10-22",
+        ),
+      ),
+    )
+      .png()
+      .toBuffer(),
+    relative_policy: await sharp(
+      Buffer.from(
+        syntheticReceiptSvg()
+          .replace("Return by: 2026-10-19", "Returns within fourteen days")
+          .replace("Warranty ends: 2027-10-05", "Warranty valid one year"),
+      ),
+    )
+      .png()
+      .toBuffer(),
+    unlabeled_merchant: await sharp(
+      Buffer.from(
+        syntheticReceiptSvg().replace(
+          "Merchant: Synthetic Appliances",
+          "Synthetic Appliances",
+        ),
+      ),
+    )
+      .png()
+      .toBuffer(),
     ambiguous_date: await sharp(
       Buffer.from(
         syntheticReceiptSvg().replace("Date: 2026-10-05", "Date: 05/10/2026"),
@@ -89,12 +129,12 @@ it("measures the quality-gated real OCR pipeline over ugly synthetic inputs with
   let extracted = 0,
     skipped = 0,
     falseHighConfidence = 0;
-  mkdirSync(".local/extraction-benchmark-v1", { recursive: true });
+  mkdirSync(".local/extraction-benchmark-v2", { recursive: true });
   for (const [name, bytes] of Object.entries(cases)) {
     const started = performance.now();
     const quality = await imageQuality(bytes);
     const sha256 = createHash("sha256").update(bytes).digest("hex");
-    writeFileSync(`.local/extraction-benchmark-v1/${name}.png`, bytes);
+    writeFileSync(`.local/extraction-benchmark-v2/${name}.png`, bytes);
     if (!mayExtract(quality, true)) {
       skipped++;
       results.push({
@@ -116,9 +156,11 @@ it("measures the quality-gated real OCR pipeline over ugly synthetic inputs with
       "2026-10-06",
     );
     const expected = { ...truth };
-    if (name === "missing_fields")
+    if (name === "missing_fields" || name === "relative_policy")
       expected.returnDate = expected.warrantyDate = null;
     if (name === "ambiguous_date") expected.purchaseDate = null;
+    if (name === "conflicting_deadline") expected.returnDate = null;
+    if (name === "unlabeled_merchant") expected.merchant = null;
     const metrics = fields.map((field) => {
       const observation = draft.observations.find((o) => o.field === field)!;
       expect(observation.evidenceId).toBe(`synthetic:${sha256}`);
@@ -136,12 +178,16 @@ it("measures the quality-gated real OCR pipeline over ugly synthetic inputs with
     });
     if (name === "crisp" || name === "duplicate")
       expect(metrics.every((m) => m.normalizedMatch)).toBe(true);
-    if (name === "missing_fields")
+    if (name === "missing_fields" || name === "relative_policy")
       expect(
         metrics
           .filter((m) => m.field === "returnDate" || m.field === "warrantyDate")
           .every((m) => m.actual === null),
       ).toBe(true);
+    if (name === "conflicting_deadline")
+      expect(metrics.find((m) => m.field === "returnDate")!.actual).toBeNull();
+    if (name === "unlabeled_merchant")
+      expect(metrics.find((m) => m.field === "merchant")!.actual).toBeNull();
     if (name === "ambiguous_date")
       expect(
         metrics.find((m) => m.field === "purchaseDate")?.actual,
@@ -186,10 +232,10 @@ it("measures the quality-gated real OCR pipeline over ugly synthetic inputs with
     };
   });
   writeFileSync(
-    ".local/extraction-benchmark-v1/report.json",
+    ".local/extraction-benchmark-v2/report.json",
     JSON.stringify(
       {
-        version: "synthetic-quality-extraction-v1",
+        version: "synthetic-quality-extraction-v2",
         representative: false,
         truthBasis:
           "generated full original; damaged candidates may differ and remain review-required",
@@ -204,4 +250,4 @@ it("measures the quality-gated real OCR pipeline over ugly synthetic inputs with
       2,
     ),
   );
-}, 60000);
+}, 90000);

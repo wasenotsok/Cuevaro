@@ -332,6 +332,25 @@
         "No managed backup/restore or JSON import claim",
         "Phase 1 and dependency gate remain open"
       ]
+    },
+    {
+      "event_id": "cuevaro-device-export-synthetic-evaluation-v2",
+      "timestamp": "2026-10-06T12:11:01Z",
+      "date": "2026-10-06",
+      "actor": "Development",
+      "event_type": "implementation",
+      "title": "On-device archive UX, owned temporary cleanup and sixteen-case generated quality/OCR regression",
+      "evidence": [
+        "tests/device-export.test.ts",
+        "tests/e2e/mobile.spec.ts",
+        "tests/extraction-benchmark.test.ts",
+        "docs/VALIDATION.md"
+      ],
+      "limitations": [
+        "Native sharing mocked; physical SDK/devices unavailable",
+        "Generated OCR is not representative calibration",
+        "Phase 1/managed/dependency gates open"
+      ]
     }
   ]
 }

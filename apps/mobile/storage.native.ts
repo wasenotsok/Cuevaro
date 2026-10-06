@@ -37,6 +37,7 @@ export type RecordCache = {
   history?: ConfirmedFact[];
   itemHistory?: ItemFact[];
   pendingCorrection?: Correction;
+  localExportEvents?: { id: string; requestedAt: string }[];
   events: Lifecycle[];
   cues: Cue[];
   createdAt: string;

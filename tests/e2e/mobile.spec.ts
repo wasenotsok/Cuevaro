@@ -1,3 +1,4 @@
+import { unzipSync, strFromU8 } from "fflate";
 import { test, expect } from "@playwright/test";
 import sharp from "sharp";
 import { readFileSync } from "node:fs";
@@ -78,6 +79,26 @@ test("correction survives offline restart and lost acknowledgement, records hist
   await expect(
     page.getByText("Correction waiting to sync", { exact: true }),
   ).toHaveCount(0);
+  await page.getByRole("button", { name: "Prepare record export" }).click();
+  await expect(page.getByText(/This unencrypted ZIP contains/)).toBeVisible();
+  await page
+    .getByRole("button", { name: "Export unencrypted record & originals" })
+    .scrollIntoViewIfNeeded();
+  await page.screenshot({ path: ".local/device-export.png" });
+  const download = page.waitForEvent("download");
+  await page
+    .getByRole("button", { name: "Export unencrypted record & originals" })
+    .click();
+  const downloaded = await download;
+  const exportPath = await downloaded.path();
+  const entries = unzipSync(readFileSync(exportPath!));
+  const exported = JSON.parse(strFromU8(entries["record.json"]));
+  expect(
+    exported.record.facts.find(
+      (f: { field: string }) => f.field === "returnDate",
+    ).value,
+  ).toBe("2026-10-21");
+  expect(entries[exported.originals[0].file]).toBeDefined();
   await page.getByRole("button", { name: "View correction history" }).click();
   await expect(
     page.getByText("Return deadline: 2026-10-19 — Earlier", { exact: true }),
@@ -137,6 +158,20 @@ test("correction survives offline restart and lost acknowledgement, records hist
     saved[0].history.filter((f: { field: string }) => f.field === "returnDate"),
   ).toHaveLength(3);
   expect(saved[0].itemHistory).toHaveLength(2);
+  await page.getByRole("button", { name: "Things", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Open saved purchase", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Prepare record export" }).click();
+  const secondDownload = page.waitForEvent("download");
+  await page
+    .getByRole("button", { name: "Export unencrypted record & originals" })
+    .click();
+  const secondPath = await (await secondDownload).path();
+  const secondManifest = JSON.parse(
+    strFromU8(unzipSync(readFileSync(secondPath!))["record.json"]),
+  );
+  expect(secondManifest.record.localExportEvents).toHaveLength(1);
 });
 test("multi-item review requires explicit choices and preserves corrected names and sources after lost response/reload", async ({
   page,

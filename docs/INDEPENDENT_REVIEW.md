@@ -48,3 +48,7 @@ Reviewer reproduced loss of dismissal/snooze after deadline -> Unknown -> restor
 ## Private export/restore review - 2026-10-06
 
 Initial inner join could omit a missing page byte row and still export the remainder. Repaired with a left join/missing-byte refusal, full ordered capture-hash verification and contiguous pages. Partial loss/changed-manifest regressions cover it; follow-up found no further actionable defect. Tenant scoping, snapshots, UUID filenames, exclusive files and separate byte verification were assessed. Restore evidence is actual local PGlite dump/load, not managed-provider recovery.
+
+## Device archive review - 2026-10-06
+
+No actionable security/integrity issue found. Review confirmed byte/order hashes, safe ZIP names, queued-edit refusal, explicit plaintext warning, request-only events, scoped cleanup and restart discovery. Added actual multi-page/replaced-first-page archive coverage after review identified that evidence limit. Native sharing remains mocked and requires physical device/file-provider validation.
