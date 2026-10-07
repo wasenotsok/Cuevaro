@@ -1,5 +1,5 @@
 import { unzipSync, strFromU8 } from "fflate";
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page, type Locator } from "@playwright/test";
 import sharp from "sharp";
 import { readFileSync } from "node:fs";
 import { syntheticReceiptSvg } from "../../packages/test-fixtures/receipt";
@@ -842,3 +842,142 @@ test("desktop companion preview remains keyboard-operable and fits its viewport"
   ).toBe(true);
   await page.screenshot({ path: ".local/desktop-preview.png", fullPage: true });
 });
+
+// Exercise real keyboard traversal and activation, rather than replacing Tab with locator.click.
+async function tabTo(page: Page, target: Locator) {
+  for (let i = 0; i < 100; i++) {
+    if (await target.evaluate((el) => el === document.activeElement)) return;
+    await page.keyboard.press("Tab");
+  }
+  throw Error("Keyboard target unreachable");
+}
+async function activateByKeyboard(page: Page, name: string) {
+  const target = page.getByRole("button", { name, exact: true });
+  await expect(target).toBeEnabled();
+  await tabTo(page, target);
+  await page.keyboard.press("Enter");
+}
+for (const theme of ["light", "dark"] as const)
+  test(`keyboard review, correction errors, history and export are accessible in ${theme} at enlarged text`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.emulateMedia({ colorScheme: theme });
+    await page.goto("/");
+    await page
+      .getByRole("button", { name: "Open synthetic development preview" })
+      .focus();
+    await page.keyboard.press("Enter");
+    const chooser = page.waitForEvent("filechooser");
+    await activateByKeyboard(page, "Choose photo");
+    await (
+      await chooser
+    ).setFiles({
+      name: `synthetic-keyboard-${theme}.png`,
+      mimeType: "image/png",
+      buffer: await sharp(
+        Buffer.from(
+          syntheticReceiptSvg().replace(
+            "Synthetic Appliances",
+            `Keyboard ${theme} Shop`,
+          ),
+        ),
+      )
+        .png()
+        .toBuffer(),
+    });
+    await activateByKeyboard(page, "Use anyway");
+    await expect(page.getByLabel("Purchase date", { exact: true })).toHaveValue(
+      "2026-10-05",
+      { timeout: 60000 },
+    );
+    // Emulate a larger text setting, not a claim about OS Dynamic Type.
+    await page.addStyleTag({
+      content:
+        "[dir=auto],input,textarea {font-size:200% !important;line-height:1.5 !important;}",
+    });
+    await page.getByLabel("Purchase date", { exact: true }).focus();
+    await page.keyboard.press("Tab");
+    await expect(
+      page.getByRole("button", { name: "Confirm purchase date", exact: true }),
+    ).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(
+      page.getByRole("button", { name: "Confirm purchase date", exact: true }),
+    ).toBeFocused();
+    for (const name of [
+      "Confirm total",
+      "Confirm return deadline",
+      "Track warranty",
+    ])
+      await activateByKeyboard(page, name);
+    await activateByKeyboard(page, "Save purchase & cues");
+    await expect(
+      page.getByRole("button", {
+        name: "Correct return deadline",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await activateByKeyboard(page, "Correct return deadline");
+    const field = page.getByLabel("Corrected value", { exact: true });
+    await tabTo(page, field);
+    await page.keyboard.press("ControlOrMeta+A");
+    await page.keyboard.insertText("not-a-date");
+    await activateByKeyboard(page, "Save correction & update reminders");
+    const error = page.getByRole("alert");
+    await expect(error).toContainText("real calendar date");
+    await expect(field).toHaveAttribute("aria-invalid", "true");
+    await expect(field).toHaveAttribute(
+      "aria-describedby",
+      "correction-value-error",
+    );
+    await expect(
+      page.getByText("Correction waiting to sync", { exact: true }),
+    ).toHaveCount(0);
+    const contrast = await error.evaluate((el) => {
+      const channels = (s: string) =>
+        s
+          .match(/[\d.]+/g)!
+          .slice(0, 3)
+          .map(Number)
+          .map((v) => {
+            const c = v / 255;
+            return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+          });
+      const lum = (s: string) =>
+        channels(s).reduce((n, c, i) => n + c * [0.2126, 0.7152, 0.0722][i], 0);
+      let bg = el.parentElement!;
+      while (
+        getComputedStyle(bg).backgroundColor === "rgba(0, 0, 0, 0)" &&
+        bg.parentElement
+      )
+        bg = bg.parentElement;
+      const a = lum(getComputedStyle(el).color),
+        b = lum(getComputedStyle(bg).backgroundColor);
+      return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    });
+    expect(contrast).toBeGreaterThanOrEqual(4.5);
+    await tabTo(page, field);
+    await page.keyboard.press("ControlOrMeta+A");
+    await page.keyboard.insertText("2026-10-21");
+    await expect(error).toHaveCount(0);
+    await activateByKeyboard(page, "Save correction & update reminders");
+    await activateByKeyboard(page, "View correction history");
+    await expect(
+      page.getByText("Correction history", { exact: true }),
+    ).toBeVisible();
+    await activateByKeyboard(page, "Prepare record export");
+    await expect(page.getByText(/This unencrypted ZIP contains/)).toBeVisible();
+    const download = page.waitForEvent("download");
+    await activateByKeyboard(page, "Export unencrypted record & originals");
+    await download;
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await page.screenshot({
+      path: `.local/keyboard-${theme}.png`,
+      fullPage: true,
+    });
+  });

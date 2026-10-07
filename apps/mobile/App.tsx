@@ -1,3 +1,4 @@
+import { ActionButton as Button, ActionControlsContext } from "./action-button";
 import { recordArchive } from "./export-record";
 import { pendingExportCleanup, deliverArchive } from "./export-delivery";
 import React, { useEffect, useState } from "react";
@@ -6,7 +7,6 @@ import {
   ScrollView,
   Text,
   View,
-  Pressable,
   TextInput,
   StyleSheet,
   Image,
@@ -38,6 +38,7 @@ import {
   confirm,
   derive,
   fields,
+  validValue,
   type Field,
   type Draft,
 } from "../../packages/domain/purchase";
@@ -102,6 +103,7 @@ async function request(path: string, body?: unknown) {
   return data;
 }
 export default function App() {
+  const [correctionError, setCorrectionError] = useState("");
   const [exportReady, setExportReady] = useState(false);
   const [exportCleanup, setExportCleanup] = useState<
     (() => void) | undefined
@@ -112,6 +114,7 @@ export default function App() {
       surface: dark ? "#20382D" : "#FFFFFF",
       text: dark ? "#F3F5EF" : "#19382F",
       muted: dark ? "#B7C9BF" : "#526B60",
+      error: dark ? "#FFB4A9" : "#A53322",
     };
   const [store, setStore] = useState<LocalStore>(),
     [captures, setCaptures] = useState<Capture[]>([]),
@@ -598,6 +601,7 @@ export default function App() {
   }
   function startCorrection(record: RecordCache, field: Field, itemId?: string) {
     if (record.pendingCorrection) return;
+    setCorrectionError("");
     const value = itemId
       ? record.items?.find((i) => i.id === itemId)?.name
       : record.facts.find((f) => f.field === field)?.value;
@@ -614,6 +618,18 @@ export default function App() {
   }
   async function applyCorrection(record: RecordCache, command: Correction) {
     if (!store) return;
+    if (
+      !validValue(command.field, command.value) ||
+      (command.itemId && command.value === null)
+    ) {
+      setCorrectionError(
+        command.field.endsWith("Date")
+          ? "Enter a real calendar date in YYYY-MM-DD format or choose Set to Unknown."
+          : `Enter a valid ${labels[command.field].toLowerCase()}.`,
+      );
+      return;
+    }
+    setCorrectionError("");
     setBusy(true);
     setError("");
     setMessage("");
@@ -705,39 +721,6 @@ export default function App() {
       setBusy(false);
     }
   }
-  const Button = ({
-    label,
-    onPress,
-    primary = false,
-    disabled = false,
-  }: {
-    label: string;
-    onPress: () => void;
-    primary?: boolean;
-    disabled?: boolean;
-  }) => (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      disabled={disabled || busy}
-      onPress={onPress}
-      style={[
-        styles.button,
-        primary ? styles.primary : { borderColor: p.muted },
-        (disabled || busy) && { opacity: 0.45 },
-      ]}
-    >
-      <Text
-        style={{
-          color: primary ? "#FFFFFF" : p.text,
-          fontWeight: "600",
-          fontSize: 16,
-        }}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
   const title = (s: string) => (
     <Text accessibilityRole="header" style={[styles.title, { color: p.text }]}>
       {s}
@@ -790,922 +773,960 @@ export default function App() {
   const tomorrow = tomorrowDate.toISOString().slice(0, 10);
   if (!development)
     return (
-      <SafeAreaView style={[styles.root, { backgroundColor: p.background }]}>
-        <ScrollView contentContainerStyle={styles.content}>
-          <Text style={[styles.brand, { color: p.text }]}>{copy.brand}</Text>
-          {title(copy.promise)}
-          {text(copy.synthetic)}
-          {card(
-            <>
-              {title("A private place for the important stuff")}
-              {text(
-                "The first slice is under development. Use generated receipts only. No real account or external processing is connected.",
-              )}
-              <Button
-                label="Open synthetic development preview"
-                primary
-                onPress={() => setDevelopment(true)}
-              />
-            </>,
-          )}
-        </ScrollView>
-      </SafeAreaView>
+      <ActionControlsContext.Provider
+        value={{ busy, text: p.text, muted: p.muted }}
+      >
+        <SafeAreaView style={[styles.root, { backgroundColor: p.background }]}>
+          <ScrollView contentContainerStyle={styles.content}>
+            <Text style={[styles.brand, { color: p.text }]}>{copy.brand}</Text>
+            {title(copy.promise)}
+            {text(copy.synthetic)}
+            {card(
+              <>
+                {title("A private place for the important stuff")}
+                {text(
+                  "The first slice is under development. Use generated receipts only. No real account or external processing is connected.",
+                )}
+                <Button
+                  label="Open synthetic development preview"
+                  primary
+                  onPress={() => setDevelopment(true)}
+                />
+              </>,
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </ActionControlsContext.Provider>
     );
   return (
-    <SafeAreaView style={[styles.root, { backgroundColor: p.background }]}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.header}>
-          <Text style={[styles.brand, { color: p.text }]}>{copy.brand}</Text>
-          <Text style={[styles.badge, { color: p.muted }]}>DEVELOPMENT</Text>
-        </View>
-        {text(copy.synthetic)}
-        <View style={styles.row}>
-          {(["Home", "Things", "Timeline"] as const).map((t) => (
-            <Button
-              key={t}
-              label={t}
-              primary={tab === t}
-              onPress={() => {
-                setTab(t);
-                setHistoryVisible(false);
-                setCorrection(undefined);
-                setCapture(undefined);
-                setDraft(undefined);
-                setSelected(undefined);
-                setPreview(false);
-              }}
-            />
-          ))}
-        </View>
-        {message ? text(message) : null}
-        {error ? (
-          <Text accessibilityRole="alert" style={styles.error}>
-            {error}
-          </Text>
-        ) : null}
-        {busy ? (
-          <View style={styles.row}>
-            <ActivityIndicator />
-            <Text style={{ color: p.text }}>Working · original retained</Text>
+    <ActionControlsContext.Provider
+      value={{ busy, text: p.text, muted: p.muted }}
+    >
+      <SafeAreaView style={[styles.root, { backgroundColor: p.background }]}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.header}>
+            <Text style={[styles.brand, { color: p.text }]}>{copy.brand}</Text>
+            <Text style={[styles.badge, { color: p.muted }]}>DEVELOPMENT</Text>
           </View>
-        ) : null}
-        {!capture &&
-          !selected &&
-          card(
-            <>
-              {title(copy.empty)}
+          {text(copy.synthetic)}
+          <View style={styles.row}>
+            {(["Home", "Things", "Timeline"] as const).map((t) => (
               <Button
-                label={copy.camera}
-                primary
-                disabled={!store}
-                onPress={() => choose("camera")}
+                key={t}
+                label={t}
+                primary={tab === t}
+                onPress={() => {
+                  setTab(t);
+                  setHistoryVisible(false);
+                  setCorrection(undefined);
+                  setCapture(undefined);
+                  setDraft(undefined);
+                  setSelected(undefined);
+                  setPreview(false);
+                }}
               />
-              <View style={styles.row}>
+            ))}
+          </View>
+          {message ? text(message) : null}
+          {error ? (
+            <Text
+              accessibilityRole="alert"
+              accessibilityLiveRegion="assertive"
+              style={[styles.error, { color: p.error }]}
+            >
+              {error}
+            </Text>
+          ) : null}
+          {busy ? (
+            <View style={styles.row}>
+              <ActivityIndicator />
+              <Text style={{ color: p.text }}>Working · original retained</Text>
+            </View>
+          ) : null}
+          {!capture &&
+            !selected &&
+            card(
+              <>
+                {title(copy.empty)}
                 <Button
-                  label={copy.library}
+                  label={copy.camera}
+                  primary
                   disabled={!store}
-                  onPress={() => choose("library")}
+                  onPress={() => choose("camera")}
                 />
-                <Button
-                  label="Choose PDF"
-                  disabled={!store}
-                  onPress={() => choose("pdf")}
-                />
-              </View>
-              {Platform.OS === "web" ? (
-                <Button
-                  label="Try synthetic receipt"
-                  disabled={!store}
-                  onPress={sample}
-                />
-              ) : null}
-            </>,
-          )}
-        {capture &&
-          card(
-            <>
-              {title(copy.quality)}
-              {text(copy.local)}
-              {title(
-                capture.quality?.grade === "bad"
-                  ? "Bad · retake needed"
-                  : capture.quality?.grade === "good"
-                    ? "Good"
-                    : "Questionable · check before continuing",
-              )}
-              {capture.quality?.findings.map((f, i) => (
-                <React.Fragment key={i}>
-                  {text(findingLabels[f])}
-                </React.Fragment>
-              ))}
-              {capture.mime === "application/pdf"
-                ? text(
-                    "PDF text can be extracted in the local development harness. Scanned PDF OCR and native PDF viewing are not enabled. Original retained.",
-                  )
-                : null}
-              {capture.mime === "application/pdf"
-                ? capture.quality?.limits.map((limit, i) => (
-                    <React.Fragment key={i}>{text(limit)}</React.Fragment>
-                  ))
-                : null}
-              <Button
-                label={copy.source}
-                onPress={() => setPreview(!preview)}
-              />
-              {capture.mime.startsWith("image/") ? (
-                <>
-                  {text(
-                    `${pageIds.length} receipt page${pageIds.length === 1 ? "" : "s"}. Add all pages before processing. Originals are retained separately.`,
-                  )}
-                  {pageIds.map((id, i) => {
-                    const page =
-                      id === capture.id
-                        ? capture
-                        : captures.find((c) => c.id === id);
-                    const q = page?.originalQuality ?? page?.quality;
-                    return (
-                      <View key={id}>
-                        {text(`Page ${i + 1}: ${q?.grade ?? "Unprocessed"}`)}
-                        <Button
-                          label={`View page ${i + 1}`}
-                          onPress={() => {
-                            setPreviewPageId(id);
-                            setPreview(true);
-                          }}
-                        />
-                        {!capture.assemblySealed &&
-                        !capture.serverId &&
-                        !draft ? (
-                          <Button
-                            label={`Replace page ${i + 1}`}
-                            onPress={() => choosePage("library", i)}
-                          />
-                        ) : null}
-                        {!capture.assemblySealed &&
-                        !capture.serverId &&
-                        !draft &&
-                        q?.grade === "bad" ? (
-                          <Button
-                            label={`Retake page ${i + 1}`}
-                            onPress={() => choosePage("camera", i)}
-                          />
-                        ) : null}
-                      </View>
-                    );
-                  })}
-                  {!capture.assemblySealed &&
-                  !capture.serverId &&
-                  !draft &&
-                  pageIds.length < 10 ? (
-                    <>
-                      <Button
-                        label="Take next receipt page"
-                        onPress={() => choosePage("camera")}
-                      />
-                      <Button
-                        label="Choose next receipt page"
-                        onPress={() => choosePage("library")}
-                      />
-                    </>
-                  ) : null}
-                </>
-              ) : null}
-              {capture.quality?.grade === "bad" ? (
-                <>
+                <View style={styles.row}>
                   <Button
-                    label={
-                      pageIds.length > 1
-                        ? "Start a new receipt capture"
-                        : copy.retake
-                    }
-                    primary
-                    onPress={() => choose("camera")}
-                  />
-                  <Button
-                    label={
-                      pageIds.length > 1
-                        ? "Start a new receipt from a photo"
-                        : copy.chooseAnother
-                    }
+                    label={copy.library}
+                    disabled={!store}
                     onPress={() => choose("library")}
                   />
-                </>
-              ) : !draft ? (
-                <>
                   <Button
-                    label={
-                      capture.useAnyway ? "Retry processing" : copy.useAnyway
-                    }
-                    primary
-                    onPress={
-                      capture.useAnyway
-                        ? () => processCapture(capture)
-                        : useAnyway
-                    }
+                    label="Choose PDF"
+                    disabled={!store}
+                    onPress={() => choose("pdf")}
                   />
+                </View>
+                {Platform.OS === "web" ? (
                   <Button
-                    label={copy.retake}
-                    onPress={() => choose("camera")}
+                    label="Try synthetic receipt"
+                    disabled={!store}
+                    onPress={sample}
                   />
-                  {capture.useAnyway ? (
-                    <Button label="Review manually" onPress={manualReview} />
-                  ) : null}
-                </>
-              ) : null}
-            </>,
-          )}
-        {!capture && originalRoot?.pageIds ? (
-          <View>
-            {text(`${pageIds.length} saved receipt pages`)}
-            {pageIds.map((id, i) => (
-              <Button
-                key={id}
-                label={`View page ${i + 1}`}
-                onPress={() => {
-                  setPreviewPageId(id);
-                  setPreview(true);
-                }}
-              />
-            ))}
-          </View>
-        ) : null}
-        {originalRoot?.retiredPageIds?.length ? (
-          <View>
-            {text("Earlier page originals retained")}
-            {originalRoot.retiredPageIds.map((id, i) => (
-              <Button
-                key={id}
-                label={`View earlier original ${i + 1}`}
-                onPress={() => {
-                  setPreviewPageId(id);
-                  setPreview(true);
-                }}
-              />
-            ))}
-          </View>
-        ) : null}
-        {preview && evidenceUri ? (
-          <Image
-            accessible
-            accessibilityRole={Platform.OS === "web" ? undefined : "image"}
-            accessibilityLabel="Original purchase evidence"
-            source={{ uri: evidenceUri }}
-            style={styles.evidence}
-            resizeMode="contain"
-          />
-        ) : null}
-        {preview && original?.mime === "application/pdf" ? (
-          <View>
-            {text("Original PDF retained. This app does not render PDF pages.")}
-            {Platform.OS === "web" ? (
-              <Button
-                label="Download original PDF"
-                onPress={() => {
-                  const blob = new Blob([new Uint8Array(original.bytes)], {
-                    type: "application/pdf",
-                  });
-                  const uri = URL.createObjectURL(blob);
-                  const anchor = document.createElement("a");
-                  anchor.href = uri;
-                  anchor.download = "cuevaro-original.pdf";
-                  anchor.click();
-                  setTimeout(() => URL.revokeObjectURL(uri), 5000);
-                }}
-              />
-            ) : (
-              text(
-                "Native PDF viewing is not connected in this development build.",
-              )
+                ) : null}
+              </>,
             )}
-          </View>
-        ) : null}
-        {draft &&
-          card(
-            <>
-              {title("Check these facts")}
+          {capture &&
+            card(
+              <>
+                {title(copy.quality)}
+                {text(copy.local)}
+                {title(
+                  capture.quality?.grade === "bad"
+                    ? "Bad · retake needed"
+                    : capture.quality?.grade === "good"
+                      ? "Good"
+                      : "Questionable · check before continuing",
+                )}
+                {capture.quality?.findings.map((f, i) => (
+                  <React.Fragment key={i}>
+                    {text(findingLabels[f])}
+                  </React.Fragment>
+                ))}
+                {capture.mime === "application/pdf"
+                  ? text(
+                      "PDF text can be extracted in the local development harness. Scanned PDF OCR and native PDF viewing are not enabled. Original retained.",
+                    )
+                  : null}
+                {capture.mime === "application/pdf"
+                  ? capture.quality?.limits.map((limit, i) => (
+                      <React.Fragment key={i}>{text(limit)}</React.Fragment>
+                    ))
+                  : null}
+                <Button
+                  label={copy.source}
+                  onPress={() => setPreview(!preview)}
+                />
+                {capture.mime.startsWith("image/") ? (
+                  <>
+                    {text(
+                      `${pageIds.length} receipt page${pageIds.length === 1 ? "" : "s"}. Add all pages before processing. Originals are retained separately.`,
+                    )}
+                    {pageIds.map((id, i) => {
+                      const page =
+                        id === capture.id
+                          ? capture
+                          : captures.find((c) => c.id === id);
+                      const q = page?.originalQuality ?? page?.quality;
+                      return (
+                        <View key={id}>
+                          {text(`Page ${i + 1}: ${q?.grade ?? "Unprocessed"}`)}
+                          <Button
+                            label={`View page ${i + 1}`}
+                            onPress={() => {
+                              setPreviewPageId(id);
+                              setPreview(true);
+                            }}
+                          />
+                          {!capture.assemblySealed &&
+                          !capture.serverId &&
+                          !draft ? (
+                            <Button
+                              label={`Replace page ${i + 1}`}
+                              onPress={() => choosePage("library", i)}
+                            />
+                          ) : null}
+                          {!capture.assemblySealed &&
+                          !capture.serverId &&
+                          !draft &&
+                          q?.grade === "bad" ? (
+                            <Button
+                              label={`Retake page ${i + 1}`}
+                              onPress={() => choosePage("camera", i)}
+                            />
+                          ) : null}
+                        </View>
+                      );
+                    })}
+                    {!capture.assemblySealed &&
+                    !capture.serverId &&
+                    !draft &&
+                    pageIds.length < 10 ? (
+                      <>
+                        <Button
+                          label="Take next receipt page"
+                          onPress={() => choosePage("camera")}
+                        />
+                        <Button
+                          label="Choose next receipt page"
+                          onPress={() => choosePage("library")}
+                        />
+                      </>
+                    ) : null}
+                  </>
+                ) : null}
+                {capture.quality?.grade === "bad" ? (
+                  <>
+                    <Button
+                      label={
+                        pageIds.length > 1
+                          ? "Start a new receipt capture"
+                          : copy.retake
+                      }
+                      primary
+                      onPress={() => choose("camera")}
+                    />
+                    <Button
+                      label={
+                        pageIds.length > 1
+                          ? "Start a new receipt from a photo"
+                          : copy.chooseAnother
+                      }
+                      onPress={() => choose("library")}
+                    />
+                  </>
+                ) : !draft ? (
+                  <>
+                    <Button
+                      label={
+                        capture.useAnyway ? "Retry processing" : copy.useAnyway
+                      }
+                      primary
+                      onPress={
+                        capture.useAnyway
+                          ? () => processCapture(capture)
+                          : useAnyway
+                      }
+                    />
+                    <Button
+                      label={copy.retake}
+                      onPress={() => choose("camera")}
+                    />
+                    {capture.useAnyway ? (
+                      <Button label="Review manually" onPress={manualReview} />
+                    ) : null}
+                  </>
+                ) : null}
+              </>,
+            )}
+          {!capture && originalRoot?.pageIds ? (
+            <View>
+              {text(`${pageIds.length} saved receipt pages`)}
+              {pageIds.map((id, i) => (
+                <Button
+                  key={id}
+                  label={`View page ${i + 1}`}
+                  onPress={() => {
+                    setPreviewPageId(id);
+                    setPreview(true);
+                  }}
+                />
+              ))}
+            </View>
+          ) : null}
+          {originalRoot?.retiredPageIds?.length ? (
+            <View>
+              {text("Earlier page originals retained")}
+              {originalRoot.retiredPageIds.map((id, i) => (
+                <Button
+                  key={id}
+                  label={`View earlier original ${i + 1}`}
+                  onPress={() => {
+                    setPreviewPageId(id);
+                    setPreview(true);
+                  }}
+                />
+              ))}
+            </View>
+          ) : null}
+          {preview && evidenceUri ? (
+            <Image
+              accessible
+              accessibilityRole={Platform.OS === "web" ? undefined : "image"}
+              accessibilityLabel="Original purchase evidence"
+              source={{ uri: evidenceUri }}
+              style={styles.evidence}
+              resizeMode="contain"
+            />
+          ) : null}
+          {preview && original?.mime === "application/pdf" ? (
+            <View>
               {text(
-                "Correct what is uncertain. Unsupported return or warranty dates stay Unknown. No retailer policy is assumed.",
+                "Original PDF retained. This app does not render PDF pages.",
               )}
-              {draft.itemCandidates ? (
-                <>
-                  {title("Items to track")}
-                  {text(
-                    "Confirm or skip each labeled item. Repeated names may be duplicate evidence. Receipt-level dates do not prove coverage for every item.",
-                  )}
-                  {draft.itemCandidates.map((candidate, i) => (
-                    <View key={candidate.id} style={styles.fact}>
-                      {text(
-                        `Item ${i + 1} — ${itemChecked.has(candidate.id) ? "Reviewed" : "Needs review"}`,
-                      )}
-                      <TextInput
-                        accessibilityLabel={`Item ${i + 1} name`}
-                        value={
-                          itemChoices.find(
-                            (c) => c.candidateId === candidate.id,
-                          )?.name ?? ""
-                        }
-                        onChangeText={(name) => {
-                          setItemChoices(
-                            itemChoices.map((c) =>
-                              c.candidateId === candidate.id
-                                ? { ...c, name: name.trim() ? name : null }
-                                : c,
-                            ),
-                          );
-                          setItemChecked(
-                            new Set(
-                              [...itemChecked].filter(
-                                (id) => id !== candidate.id,
+              {Platform.OS === "web" ? (
+                <Button
+                  label="Download original PDF"
+                  onPress={() => {
+                    const blob = new Blob([new Uint8Array(original.bytes)], {
+                      type: "application/pdf",
+                    });
+                    const uri = URL.createObjectURL(blob);
+                    const anchor = document.createElement("a");
+                    anchor.href = uri;
+                    anchor.download = "cuevaro-original.pdf";
+                    anchor.click();
+                    setTimeout(() => URL.revokeObjectURL(uri), 5000);
+                  }}
+                />
+              ) : (
+                text(
+                  "Native PDF viewing is not connected in this development build.",
+                )
+              )}
+            </View>
+          ) : null}
+          {draft &&
+            card(
+              <>
+                {title("Check these facts")}
+                {text(
+                  "Correct what is uncertain. Unsupported return or warranty dates stay Unknown. No retailer policy is assumed.",
+                )}
+                {draft.itemCandidates ? (
+                  <>
+                    {title("Items to track")}
+                    {text(
+                      "Confirm or skip each labeled item. Repeated names may be duplicate evidence. Receipt-level dates do not prove coverage for every item.",
+                    )}
+                    {draft.itemCandidates.map((candidate, i) => (
+                      <View key={candidate.id} style={styles.fact}>
+                        {text(
+                          `Item ${i + 1} — ${itemChecked.has(candidate.id) ? "Reviewed" : "Needs review"}`,
+                        )}
+                        <TextInput
+                          accessibilityLabel={`Item ${i + 1} name`}
+                          value={
+                            itemChoices.find(
+                              (c) => c.candidateId === candidate.id,
+                            )?.name ?? ""
+                          }
+                          onChangeText={(name) => {
+                            setItemChoices(
+                              itemChoices.map((c) =>
+                                c.candidateId === candidate.id
+                                  ? { ...c, name: name.trim() ? name : null }
+                                  : c,
                               ),
-                            ),
-                          );
+                            );
+                            setItemChecked(
+                              new Set(
+                                [...itemChecked].filter(
+                                  (id) => id !== candidate.id,
+                                ),
+                              ),
+                            );
+                          }}
+                          style={[
+                            styles.input,
+                            { color: p.text, borderColor: p.muted },
+                          ]}
+                        />
+                        {text(
+                          `Receipt${candidate.observation.pages?.length ? ` (page ${candidate.observation.pages.join(", ")})` : ""}: "${candidate.observation.excerpt}" — low confidence`,
+                        )}
+                        <View style={styles.row}>
+                          <Button
+                            label={`Track item ${i + 1}`}
+                            disabled={
+                              !itemChoices.find(
+                                (c) => c.candidateId === candidate.id,
+                              )?.name
+                            }
+                            onPress={() =>
+                              setItemChecked(
+                                new Set([...itemChecked, candidate.id]),
+                              )
+                            }
+                          />
+                          <Button
+                            label={`Skip item ${i + 1}`}
+                            onPress={() => {
+                              setItemChoices(
+                                itemChoices.map((c) =>
+                                  c.candidateId === candidate.id
+                                    ? { ...c, name: null }
+                                    : c,
+                                ),
+                              );
+                              setItemChecked(
+                                new Set([...itemChecked, candidate.id]),
+                              );
+                            }}
+                          />
+                        </View>
+                      </View>
+                    ))}
+                  </>
+                ) : null}
+                {draft.observations
+                  .filter((o) => !draft.itemCandidates || o.field !== "item")
+                  .map((o) => (
+                    <View key={o.field} style={styles.fact}>
+                      <Text style={[styles.subtitle, { color: p.text }]}>
+                        {labels[o.field]} ·{" "}
+                        {values[o.field] === null
+                          ? "Unknown"
+                          : checked.has(o.field)
+                            ? "Reviewed"
+                            : "Needs review"}
+                      </Text>
+                      <TextInput
+                        accessibilityLabel={labels[o.field]}
+                        placeholder={copy.unknown}
+                        placeholderTextColor={p.muted}
+                        value={values[o.field] ?? ""}
+                        onChangeText={(v) => {
+                          setValues({
+                            ...values,
+                            [o.field]: v.trim() ? v : null,
+                          });
+                          const c = new Set(checked);
+                          c.delete(o.field);
+                          setChecked(c);
                         }}
                         style={[
                           styles.input,
                           { color: p.text, borderColor: p.muted },
                         ]}
+                        keyboardType={
+                          o.field === "total" ? "decimal-pad" : "default"
+                        }
                       />
                       {text(
-                        `Receipt${candidate.observation.pages?.length ? ` (page ${candidate.observation.pages.join(", ")})` : ""}: "${candidate.observation.excerpt}" — low confidence`,
+                        o.excerpt
+                          ? `Receipt${o.pages?.length ? ` (${originalRoot?.mime === "application/pdf" ? "PDF " : ""}page ${o.pages.join(", ")})` : ""}: "${o.excerpt}"`
+                          : "No supporting text found.",
                       )}
-                      <View style={styles.row}>
-                        <Button
-                          label={`Track item ${i + 1}`}
-                          disabled={
-                            !itemChoices.find(
-                              (c) => c.candidateId === candidate.id,
-                            )?.name
-                          }
-                          onPress={() =>
-                            setItemChecked(
-                              new Set([...itemChecked, candidate.id]),
-                            )
-                          }
-                        />
-                        <Button
-                          label={`Skip item ${i + 1}`}
-                          onPress={() => {
-                            setItemChoices(
-                              itemChoices.map((c) =>
-                                c.candidateId === candidate.id
-                                  ? { ...c, name: null }
-                                  : c,
-                              ),
-                            );
-                            setItemChecked(
-                              new Set([...itemChecked, candidate.id]),
-                            );
-                          }}
-                        />
-                      </View>
+                      {text(
+                        `Extraction confidence: ${o.confidence}. ${o.reason === "missing" ? "Not found in evidence." : o.reason === "ambiguous_or_invalid_date" ? "Date is ambiguous or invalid; keep unknown unless verified." : "Verify this value against the original."}`,
+                      )}
+                      {consequential.has(o.field) ? (
+                        <View style={styles.row}>
+                          <Button
+                            label={
+                              o.field === "warrantyDate"
+                                ? "Track warranty"
+                                : `Confirm ${labels[o.field].toLowerCase()}`
+                            }
+                            disabled={!values[o.field]}
+                            onPress={() =>
+                              setChecked(new Set([...checked, o.field]))
+                            }
+                          />
+                          <Button
+                            label={
+                              o.field === "warrantyDate"
+                                ? "Don't track warranty"
+                                : "Keep unknown"
+                            }
+                            onPress={() => {
+                              setValues({ ...values, [o.field]: null });
+                              setChecked(new Set([...checked, o.field]));
+                            }}
+                          />
+                        </View>
+                      ) : null}
                     </View>
                   ))}
-                </>
-              ) : null}
-              {draft.observations
-                .filter((o) => !draft.itemCandidates || o.field !== "item")
-                .map((o) => (
-                  <View key={o.field} style={styles.fact}>
-                    <Text style={[styles.subtitle, { color: p.text }]}>
-                      {labels[o.field]} ·{" "}
-                      {values[o.field] === null
-                        ? "Unknown"
-                        : checked.has(o.field)
-                          ? "Reviewed"
-                          : "Needs review"}
-                    </Text>
+                <Button label={copy.save} primary onPress={save} />
+              </>,
+            )}
+          {selected &&
+            card(
+              <>
+                {title(
+                  selected.facts.find((f) => f.field === "item")?.value ??
+                    "Purchase",
+                )}
+                {text(copy.local)}
+                {selected.items?.length ? (
+                  <>
+                    {title("Tracked items")}
+                    {selected.items.map((item, i) => (
+                      <View key={item.id}>
+                        {text(item.name)}
+                        {text(
+                          `${item.authority === "user_entered" ? "Corrected by you" : "Confirmed by you"} - ${item.observation.excerpt}`,
+                        )}
+                        <Button
+                          label={`Correct tracked item ${i + 1}`}
+                          disabled={!!selected.pendingCorrection}
+                          onPress={() =>
+                            startCorrection(selected, "item", item.id)
+                          }
+                        />
+                      </View>
+                    ))}
+                    {text(
+                      "Dates below belong to this receipt. Item-specific warranty coverage remains unverified.",
+                    )}
+                  </>
+                ) : null}
+                {selected.facts
+                  .filter((f) => f.field !== "item" || !selected.items?.length)
+                  .map((f) => (
+                    <View key={f.id} style={styles.fact}>
+                      <Text style={[styles.subtitle, { color: p.text }]}>
+                        {labels[f.field]}
+                      </Text>
+                      {text(f.value ?? "Unknown")}
+                      {text(
+                        f.value
+                          ? `${f.authority === "user_entered" ? "Entered by you" : "Confirmed by you"} · ${f.observation.excerpt || "Manual review"}`
+                          : "No supported value",
+                      )}
+                      <Button
+                        label={`Correct ${labels[f.field].toLowerCase()}`}
+                        disabled={!!selected.pendingCorrection}
+                        onPress={() => startCorrection(selected, f.field)}
+                      />
+                    </View>
+                  ))}
+                {selected.pendingCorrection ? (
+                  <View>
+                    {title("Correction waiting to sync")}
+                    {text(
+                      `${labels[selected.pendingCorrection.field]} draft: ${selected.pendingCorrection.value ?? "Unknown"}. Showing last confirmed facts; the queued value is not yet confirmed on this device.`,
+                    )}
+                    <Button
+                      label="Retry queued correction"
+                      primary
+                      onPress={() =>
+                        applyCorrection(selected, selected.pendingCorrection!)
+                      }
+                    />
+                    <Button
+                      label="Discard queued correction & refresh facts"
+                      onPress={() => discardQueuedCorrection(selected)}
+                    />
+                  </View>
+                ) : correction?.purchaseId === selected.id ? (
+                  <View>
+                    {title(
+                      `Correct ${labels[correction.command.field].toLowerCase()}`,
+                    )}
+                    {text(
+                      "The original observation and earlier confirmed values stay in history. Only supported dates create cues; stopped reminders stay stopped.",
+                    )}
                     <TextInput
-                      accessibilityLabel={labels[o.field]}
-                      placeholder={copy.unknown}
-                      placeholderTextColor={p.muted}
-                      value={values[o.field] ?? ""}
-                      onChangeText={(v) => {
-                        setValues({
-                          ...values,
-                          [o.field]: v.trim() ? v : null,
+                      accessibilityLabel="Corrected value"
+                      accessibilityHint={
+                        correctionError ||
+                        `Correct ${labels[correction.command.field].toLowerCase()}`
+                      }
+                      aria-describedby={
+                        correctionError ? "correction-value-error" : undefined
+                      }
+                      aria-invalid={!!correctionError}
+                      value={correction.command.value ?? ""}
+                      onChangeText={(value) => {
+                        setCorrectionError("");
+                        setCorrection({
+                          ...correction,
+                          command: {
+                            ...correction.command,
+                            value: value.trim() ? value : null,
+                          },
                         });
-                        const c = new Set(checked);
-                        c.delete(o.field);
-                        setChecked(c);
                       }}
+                      placeholder="Unknown"
+                      placeholderTextColor={p.muted}
                       style={[
                         styles.input,
                         { color: p.text, borderColor: p.muted },
                       ]}
-                      keyboardType={
-                        o.field === "total" ? "decimal-pad" : "default"
-                      }
                     />
-                    {text(
-                      o.excerpt
-                        ? `Receipt${o.pages?.length ? ` (${originalRoot?.mime === "application/pdf" ? "PDF " : ""}page ${o.pages.join(", ")})` : ""}: "${o.excerpt}"`
-                        : "No supporting text found.",
-                    )}
-                    {text(
-                      `Extraction confidence: ${o.confidence}. ${o.reason === "missing" ? "Not found in evidence." : o.reason === "ambiguous_or_invalid_date" ? "Date is ambiguous or invalid; keep unknown unless verified." : "Verify this value against the original."}`,
-                    )}
-                    {consequential.has(o.field) ? (
-                      <View style={styles.row}>
-                        <Button
-                          label={
-                            o.field === "warrantyDate"
-                              ? "Track warranty"
-                              : `Confirm ${labels[o.field].toLowerCase()}`
-                          }
-                          disabled={!values[o.field]}
-                          onPress={() =>
-                            setChecked(new Set([...checked, o.field]))
-                          }
-                        />
-                        <Button
-                          label={
-                            o.field === "warrantyDate"
-                              ? "Don't track warranty"
-                              : "Keep unknown"
-                          }
-                          onPress={() => {
-                            setValues({ ...values, [o.field]: null });
-                            setChecked(new Set([...checked, o.field]));
-                          }}
-                        />
-                      </View>
+                    {correctionError ? (
+                      <Text
+                        nativeID="correction-value-error"
+                        accessibilityRole="alert"
+                        accessibilityLiveRegion="assertive"
+                        style={[styles.error, { color: p.error }]}
+                      >
+                        {correctionError}
+                      </Text>
                     ) : null}
-                  </View>
-                ))}
-              <Button label={copy.save} primary onPress={save} />
-            </>,
-          )}
-        {selected &&
-          card(
-            <>
-              {title(
-                selected.facts.find((f) => f.field === "item")?.value ??
-                  "Purchase",
-              )}
-              {text(copy.local)}
-              {selected.items?.length ? (
-                <>
-                  {title("Tracked items")}
-                  {selected.items.map((item, i) => (
-                    <View key={item.id}>
-                      {text(item.name)}
-                      {text(
-                        `${item.authority === "user_entered" ? "Corrected by you" : "Confirmed by you"} - ${item.observation.excerpt}`,
-                      )}
+                    {!correction.command.itemId ? (
                       <Button
-                        label={`Correct tracked item ${i + 1}`}
-                        disabled={!!selected.pendingCorrection}
+                        label="Set corrected fact to Unknown"
                         onPress={() =>
-                          startCorrection(selected, "item", item.id)
+                          setCorrection({
+                            ...correction,
+                            command: { ...correction.command, value: null },
+                          })
                         }
                       />
-                    </View>
-                  ))}
-                  {text(
-                    "Dates below belong to this receipt. Item-specific warranty coverage remains unverified.",
-                  )}
-                </>
-              ) : null}
-              {selected.facts
-                .filter((f) => f.field !== "item" || !selected.items?.length)
-                .map((f) => (
-                  <View key={f.id} style={styles.fact}>
-                    <Text style={[styles.subtitle, { color: p.text }]}>
-                      {labels[f.field]}
-                    </Text>
-                    {text(f.value ?? "Unknown")}
+                    ) : null}
+                    <Button
+                      label="Save correction & update reminders"
+                      primary
+                      onPress={() =>
+                        applyCorrection(selected, correction.command)
+                      }
+                      disabled={
+                        correction.command.itemId
+                          ? correction.command.value ===
+                              selected.items?.find(
+                                (i) => i.id === correction.command.itemId,
+                              )?.name || !correction.command.value
+                          : correction.command.value ===
+                            selected.facts.find(
+                              (f) => f.field === correction.command.field,
+                            )?.value
+                      }
+                    />
+                    <Button
+                      label="Cancel correction draft"
+                      onPress={() => setCorrection(undefined)}
+                    />
+                  </View>
+                ) : null}
+                <Button
+                  label={
+                    historyVisible
+                      ? "Hide correction history"
+                      : "View correction history"
+                  }
+                  onPress={() => setHistoryVisible(!historyVisible)}
+                />
+                {historyVisible ? (
+                  <View>
+                    {title("Correction history")}
+                    {[
+                      ...(selected.history ?? selected.facts),
+                      ...(selected.itemHistory ?? []),
+                    ]
+                      .filter(
+                        (f) =>
+                          f.supersedesId ||
+                          [
+                            ...(selected.history ?? []),
+                            ...(selected.itemHistory ?? []),
+                          ].some((n) => n.supersedesId === f.id),
+                      )
+                      .map((f) => (
+                        <View key={f.id}>
+                          {text(
+                            `${labels[f.field]}: ${f.value ?? "Unknown"} — ${[...selected.facts, ...(selected.items ?? []).map((i) => ({ id: i.factId }))].some((n) => n.id === f.id) ? "Current" : "Earlier"}`,
+                          )}
+                          {text(
+                            `${f.authority === "user_entered" ? "Entered by you" : "Confirmed by you"} · ${new Date(f.confirmedAt).toLocaleString()}`,
+                          )}
+                          {text(
+                            `Original source: ${f.observation.excerpt || "Manual review; no extracted support"}`,
+                          )}
+                        </View>
+                      ))}
+                  </View>
+                ) : null}
+                {title("What Cuevaro is watching")}
+                {selected.events.map((e) => (
+                  <View key={e.kind}>
                     {text(
-                      f.value
-                        ? `${f.authority === "user_entered" ? "Entered by you" : "Confirmed by you"} · ${f.observation.excerpt || "Manual review"}`
-                        : "No supported value",
+                      `${e.kind === "return" ? "Return deadline" : "Warranty ends"}: ${e.dueDate ?? "Unknown"} · ${e.timezone}${e.status === "not_applicable" ? " · Reminders stopped" : ""}`,
+                    )}
+                  </View>
+                ))}
+                {text(
+                  "In-app cue dates: " +
+                    (selected.cues
+                      .filter((c) =>
+                        ["scheduled", "delivered"].includes(c.state),
+                      )
+                      .map((c) => c.scheduledFor)
+                      .join(", ") || "None — no dates invented"),
+                )}
+                <Button
+                  label="Prepare record export"
+                  disabled={
+                    !!selected.pendingCorrection || busy || !!exportCleanup
+                  }
+                  onPress={() => setExportReady(true)}
+                />
+                {exportReady ? (
+                  <View>
+                    {text(
+                      "This unencrypted ZIP contains your receipt originals, saved facts and history. Choose a trusted destination. Copies outside Cuevaro cannot be recalled. Export covers this device's saved record, not cloud backup.",
                     )}
                     <Button
-                      label={`Correct ${labels[f.field].toLowerCase()}`}
-                      disabled={!!selected.pendingCorrection}
-                      onPress={() => startCorrection(selected, f.field)}
+                      label="Export unencrypted record & originals"
+                      disabled={busy}
+                      onPress={async () => {
+                        setBusy(true);
+                        setError("");
+                        try {
+                          const bytes = await recordArchive(
+                            selected,
+                            await store!.captures(),
+                            async (data) =>
+                              Array.from(
+                                new Uint8Array(
+                                  await Crypto.digest(
+                                    Crypto.CryptoDigestAlgorithm.SHA256,
+                                    data as Uint8Array<ArrayBuffer>,
+                                  ),
+                                ),
+                                (v) => v.toString(16).padStart(2, "0"),
+                              ).join(""),
+                          );
+                          const originals = await store!.captures();
+                          const root = originals.find(
+                            (c) => c.id === selected.captureId,
+                          );
+                          if (!root) throw Error("MISSING_ORIGINAL");
+                          const audited = {
+                            ...selected,
+                            localExportEvents: [
+                              ...(selected.localExportEvents ?? []),
+                              {
+                                id: Crypto.randomUUID(),
+                                requestedAt: new Date().toISOString(),
+                              },
+                            ],
+                          };
+                          await store!.saveRecord(audited, root);
+                          setSelected(audited);
+                          setRecords(await store!.records());
+                          const cleanup = await deliverArchive(bytes);
+                          setExportCleanup(() => cleanup);
+                          setExportReady(false);
+                          setMessage(
+                            cleanup
+                              ? "Export destination chooser closed. A temporary unencrypted copy remains on this device until you remove it. This does not confirm delivery."
+                              : "Export download requested. Check your browser downloads; this does not confirm delivery.",
+                          );
+                        } catch {
+                          try {
+                            const cleanup = await pendingExportCleanup();
+                            setExportCleanup(() => cleanup);
+                          } catch {
+                            /* Existing warning retains cleanup uncertainty. */
+                          }
+                          setError(
+                            "Export could not complete. Resolve any queued correction and check that every original is available. Saved records remain unchanged.",
+                          );
+                        } finally {
+                          setBusy(false);
+                        }
+                      }}
+                    />
+                    <Button
+                      label="Cancel export"
+                      onPress={() => setExportReady(false)}
+                    />
+                  </View>
+                ) : null}
+                <Button
+                  label={copy.source}
+                  onPress={() => setPreview(!preview)}
+                />
+                <Button
+                  label="Back to Things"
+                  onPress={() => setSelected(undefined)}
+                />
+              </>,
+            )}
+          {exportCleanup ? (
+            <View>
+              {text(
+                "A temporary unencrypted export remains in this app's cache. Removal here cannot delete copies saved to another app.",
+              )}
+              <Button
+                label="Remove temporary export from this device"
+                onPress={() => {
+                  try {
+                    exportCleanup();
+                    setExportCleanup(undefined);
+                    setMessage("Temporary export removed from this device.");
+                  } catch {
+                    setError(
+                      "Temporary export cleanup failed; retry on this device.",
+                    );
+                  }
+                }}
+              />
+            </View>
+          ) : null}
+          {!capture && !selected && tab === "Home" && (
+            <>
+              {title(
+                cues.some((c) => c.scheduledFor <= today)
+                  ? "Needs attention"
+                  : copy.quiet,
+              )}
+              {text("Push delivery is not enabled.")}
+              {records
+                .filter((r) => r.pendingCorrection)
+                .map((r) => (
+                  <View key={r.id}>
+                    {text("A saved correction is waiting to sync.")}
+                    <Button
+                      label="Review queued correction"
+                      onPress={() => {
+                        setSelected(r);
+                        setTab("Things");
+                        setCorrection(undefined);
+                      }}
                     />
                   </View>
                 ))}
-              {selected.pendingCorrection ? (
-                <View>
-                  {title("Correction waiting to sync")}
-                  {text(
-                    `${labels[selected.pendingCorrection.field]} draft: ${selected.pendingCorrection.value ?? "Unknown"}. Showing last confirmed facts; the queued value is not yet confirmed on this device.`,
-                  )}
-                  <Button
-                    label="Retry queued correction"
-                    primary
-                    onPress={() =>
-                      applyCorrection(selected, selected.pendingCorrection!)
-                    }
-                  />
-                  <Button
-                    label="Discard queued correction & refresh facts"
-                    onPress={() => discardQueuedCorrection(selected)}
-                  />
-                </View>
-              ) : correction?.purchaseId === selected.id ? (
-                <View>
-                  {title(
-                    `Correct ${labels[correction.command.field].toLowerCase()}`,
-                  )}
-                  {text(
-                    "The original observation and earlier confirmed values stay in history. Only supported dates create cues; stopped reminders stay stopped.",
-                  )}
-                  <TextInput
-                    accessibilityLabel="Corrected value"
-                    value={correction.command.value ?? ""}
-                    onChangeText={(value) =>
-                      setCorrection({
-                        ...correction,
-                        command: {
-                          ...correction.command,
-                          value: value.trim() ? value : null,
-                        },
-                      })
-                    }
-                    placeholder="Unknown"
-                    placeholderTextColor={p.muted}
-                    style={[
-                      styles.input,
-                      { color: p.text, borderColor: p.muted },
-                    ]}
-                  />
-                  {!correction.command.itemId ? (
-                    <Button
-                      label="Set corrected fact to Unknown"
-                      onPress={() =>
-                        setCorrection({
-                          ...correction,
-                          command: { ...correction.command, value: null },
-                        })
-                      }
-                    />
-                  ) : null}
-                  <Button
-                    label="Save correction & update reminders"
-                    primary
-                    onPress={() =>
-                      applyCorrection(selected, correction.command)
-                    }
-                    disabled={
-                      correction.command.itemId
-                        ? correction.command.value ===
-                            selected.items?.find(
-                              (i) => i.id === correction.command.itemId,
-                            )?.name || !correction.command.value
-                        : correction.command.value ===
-                          selected.facts.find(
-                            (f) => f.field === correction.command.field,
-                          )?.value
-                    }
-                  />
-                  <Button
-                    label="Cancel correction draft"
-                    onPress={() => setCorrection(undefined)}
-                  />
-                </View>
-              ) : null}
-              <Button
-                label={
-                  historyVisible
-                    ? "Hide correction history"
-                    : "View correction history"
-                }
-                onPress={() => setHistoryVisible(!historyVisible)}
-              />
-              {historyVisible ? (
-                <View>
-                  {title("Correction history")}
-                  {[
-                    ...(selected.history ?? selected.facts),
-                    ...(selected.itemHistory ?? []),
-                  ]
-                    .filter(
-                      (f) =>
-                        f.supersedesId ||
-                        [
-                          ...(selected.history ?? []),
-                          ...(selected.itemHistory ?? []),
-                        ].some((n) => n.supersedesId === f.id),
-                    )
-                    .map((f) => (
-                      <View key={f.id}>
-                        {text(
-                          `${labels[f.field]}: ${f.value ?? "Unknown"} — ${[...selected.facts, ...(selected.items ?? []).map((i) => ({ id: i.factId }))].some((n) => n.id === f.id) ? "Current" : "Earlier"}`,
+              {cues
+                .filter((c) => c.scheduledFor <= today)
+                .map((c) => (
+                  <View key={c.id}>
+                    {card(
+                      <>
+                        {title(
+                          `${c.kind === "return" ? "Return window" : "Warranty"} needs attention`,
                         )}
                         {text(
-                          `${f.authority === "user_entered" ? "Entered by you" : "Confirmed by you"} · ${new Date(f.confirmedAt).toLocaleString()}`,
+                          `Deadline ${c.dueDate} · ${c.record.facts.find((f) => f.field === "item")?.value ?? "Purchase"}`,
                         )}
+                        <Button
+                          label="View purchase & evidence"
+                          onPress={() => setSelected(c.record)}
+                        />
+                      </>,
+                    )}
+                  </View>
+                ))}
+              {title("Pending captures")}
+              {captures
+                .filter((c) => c.state !== "confirmed")
+                .filter(
+                  (c) =>
+                    !c.groupParentId ||
+                    !captures.some((root) =>
+                      [
+                        ...(root.pageIds ?? []),
+                        ...(root.retiredPageIds ?? []),
+                      ].includes(c.id),
+                    ),
+                )
+                .map((c) => (
+                  <View key={c.id}>
+                    {card(
+                      <>
                         {text(
-                          `Original source: ${f.observation.excerpt || "Manual review; no extracted support"}`,
+                          `${c.quality?.grade ?? "Unprocessed"} · ${copy.local}`,
                         )}
-                      </View>
-                    ))}
-                </View>
-              ) : null}
-              {title("What Cuevaro is watching")}
-              {selected.events.map((e) => (
-                <View key={e.kind}>
-                  {text(
-                    `${e.kind === "return" ? "Return deadline" : "Warranty ends"}: ${e.dueDate ?? "Unknown"} · ${e.timezone}${e.status === "not_applicable" ? " · Reminders stopped" : ""}`,
-                  )}
-                </View>
-              ))}
-              {text(
-                "In-app cue dates: " +
-                  (selected.cues
-                    .filter((c) => ["scheduled", "delivered"].includes(c.state))
-                    .map((c) => c.scheduledFor)
-                    .join(", ") || "None — no dates invented"),
-              )}
-              <Button
-                label="Prepare record export"
-                disabled={
-                  !!selected.pendingCorrection || busy || !!exportCleanup
-                }
-                onPress={() => setExportReady(true)}
-              />
-              {exportReady ? (
-                <View>
-                  {text(
-                    "This unencrypted ZIP contains your receipt originals, saved facts and history. Choose a trusted destination. Copies outside Cuevaro cannot be recalled. Export covers this device's saved record, not cloud backup.",
-                  )}
-                  <Button
-                    label="Export unencrypted record & originals"
-                    disabled={busy}
-                    onPress={async () => {
-                      setBusy(true);
-                      setError("");
-                      try {
-                        const bytes = await recordArchive(
-                          selected,
-                          await store!.captures(),
-                          async (data) =>
-                            Array.from(
-                              new Uint8Array(
-                                await Crypto.digest(
-                                  Crypto.CryptoDigestAlgorithm.SHA256,
-                                  data as Uint8Array<ArrayBuffer>,
-                                ),
-                              ),
-                              (v) => v.toString(16).padStart(2, "0"),
-                            ).join(""),
-                        );
-                        const originals = await store!.captures();
-                        const root = originals.find(
-                          (c) => c.id === selected.captureId,
-                        );
-                        if (!root) throw Error("MISSING_ORIGINAL");
-                        const audited = {
-                          ...selected,
-                          localExportEvents: [
-                            ...(selected.localExportEvents ?? []),
-                            {
-                              id: Crypto.randomUUID(),
-                              requestedAt: new Date().toISOString(),
-                            },
-                          ],
-                        };
-                        await store!.saveRecord(audited, root);
-                        setSelected(audited);
-                        setRecords(await store!.records());
-                        const cleanup = await deliverArchive(bytes);
-                        setExportCleanup(() => cleanup);
-                        setExportReady(false);
-                        setMessage(
-                          cleanup
-                            ? "Export destination chooser closed. A temporary unencrypted copy remains on this device until you remove it. This does not confirm delivery."
-                            : "Export download requested. Check your browser downloads; this does not confirm delivery.",
-                        );
-                      } catch {
-                        try {
-                          const cleanup = await pendingExportCleanup();
-                          setExportCleanup(() => cleanup);
-                        } catch {
-                          /* Existing warning retains cleanup uncertainty. */
-                        }
-                        setError(
-                          "Export could not complete. Resolve any queued correction and check that every original is available. Saved records remain unchanged.",
-                        );
-                      } finally {
-                        setBusy(false);
-                      }
-                    }}
-                  />
-                  <Button
-                    label="Cancel export"
-                    onPress={() => setExportReady(false)}
-                  />
-                </View>
-              ) : null}
-              <Button
-                label={copy.source}
-                onPress={() => setPreview(!preview)}
-              />
-              <Button
-                label="Back to Things"
-                onPress={() => setSelected(undefined)}
-              />
-            </>,
+                        <Button
+                          label="Resume saved capture"
+                          onPress={() => {
+                            setCapture(c);
+                            setPreview(false);
+                            setSelected(undefined);
+                            if (c.draft) showDraft(c.draft);
+                          }}
+                        />
+                      </>,
+                    )}
+                  </View>
+                ))}
+            </>
           )}
-        {exportCleanup ? (
-          <View>
-            {text(
-              "A temporary unencrypted export remains in this app's cache. Removal here cannot delete copies saved to another app.",
-            )}
-            <Button
-              label="Remove temporary export from this device"
-              onPress={() => {
-                try {
-                  exportCleanup();
-                  setExportCleanup(undefined);
-                  setMessage("Temporary export removed from this device.");
-                } catch {
-                  setError(
-                    "Temporary export cleanup failed; retry on this device.",
-                  );
-                }
-              }}
-            />
-          </View>
-        ) : null}
-        {!capture && !selected && tab === "Home" && (
-          <>
-            {title(
-              cues.some((c) => c.scheduledFor <= today)
-                ? "Needs attention"
-                : copy.quiet,
-            )}
-            {text("Push delivery is not enabled.")}
-            {records
-              .filter((r) => r.pendingCorrection)
-              .map((r) => (
+          {!capture && !selected && tab === "Things" && (
+            <>
+              {title("Your things")}
+              <TextInput
+                accessibilityLabel="Search saved purchases"
+                placeholder="Search item, merchant or date"
+                placeholderTextColor={p.muted}
+                value={search}
+                onChangeText={setSearch}
+                style={[styles.input, { color: p.text, borderColor: p.muted }]}
+              />
+              {filtered.map((r) => (
                 <View key={r.id}>
-                  {text("A saved correction is waiting to sync.")}
-                  <Button
-                    label="Review queued correction"
-                    onPress={() => {
-                      setSelected(r);
-                      setTab("Things");
-                      setCorrection(undefined);
-                    }}
-                  />
-                </View>
-              ))}
-            {cues
-              .filter((c) => c.scheduledFor <= today)
-              .map((c) => (
-                <View key={c.id}>
                   {card(
                     <>
                       {title(
-                        `${c.kind === "return" ? "Return window" : "Warranty"} needs attention`,
+                        r.facts.find((f) => f.field === "item")?.value ??
+                          "Purchase",
                       )}
                       {text(
-                        `Deadline ${c.dueDate} · ${c.record.facts.find((f) => f.field === "item")?.value ?? "Purchase"}`,
+                        r.facts.find((f) => f.field === "merchant")?.value ??
+                          "Merchant unknown",
                       )}
                       <Button
-                        label="View purchase & evidence"
-                        onPress={() => setSelected(c.record)}
-                      />
-                    </>,
-                  )}
-                </View>
-              ))}
-            {title("Pending captures")}
-            {captures
-              .filter((c) => c.state !== "confirmed")
-              .filter(
-                (c) =>
-                  !c.groupParentId ||
-                  !captures.some((root) =>
-                    [
-                      ...(root.pageIds ?? []),
-                      ...(root.retiredPageIds ?? []),
-                    ].includes(c.id),
-                  ),
-              )
-              .map((c) => (
-                <View key={c.id}>
-                  {card(
-                    <>
-                      {text(
-                        `${c.quality?.grade ?? "Unprocessed"} · ${copy.local}`,
-                      )}
-                      <Button
-                        label="Resume saved capture"
+                        label="Open saved purchase"
                         onPress={() => {
-                          setCapture(c);
+                          setSelected(r);
                           setPreview(false);
-                          setSelected(undefined);
-                          if (c.draft) showDraft(c.draft);
                         }}
                       />
                     </>,
                   )}
                 </View>
               ))}
-          </>
-        )}
-        {!capture && !selected && tab === "Things" && (
-          <>
-            {title("Your things")}
-            <TextInput
-              accessibilityLabel="Search saved purchases"
-              placeholder="Search item, merchant or date"
-              placeholderTextColor={p.muted}
-              value={search}
-              onChangeText={setSearch}
-              style={[styles.input, { color: p.text, borderColor: p.muted }]}
-            />
-            {filtered.map((r) => (
-              <View key={r.id}>
-                {card(
-                  <>
-                    {title(
-                      r.facts.find((f) => f.field === "item")?.value ??
-                        "Purchase",
+            </>
+          )}
+          {!capture && !selected && tab === "Timeline" && (
+            <>
+              {title("Coming soon")}
+              {text(
+                "Calendar dates use Asia/Manila. No background push is enabled.",
+              )}
+              {cues
+                .sort((a, b) => a.scheduledFor.localeCompare(b.scheduledFor))
+                .map((c) => (
+                  <View key={c.id}>
+                    {card(
+                      <>
+                        {title(
+                          `${c.kind === "return" ? "Return window" : "Warranty"} reminder`,
+                        )}
+                        {text(`${c.scheduledFor} · deadline ${c.dueDate}`)}
+                        {text(
+                          c.record.facts.find((f) => f.field === "item")
+                            ?.value ?? "Purchase",
+                        )}
+                        <Button
+                          label="View purchase & evidence"
+                          onPress={() => setSelected(c.record)}
+                        />
+                        <Button
+                          label="Dismiss this reminder"
+                          onPress={() =>
+                            changeCue(c.record, {
+                              type: "dismiss",
+                              cueId: c.id,
+                            })
+                          }
+                        />
+                        <Button
+                          label="Remind tomorrow"
+                          disabled={tomorrow > c.dueDate}
+                          onPress={() =>
+                            changeCue(c.record, {
+                              type: "snooze",
+                              cueId: c.id,
+                              date: tomorrow,
+                            })
+                          }
+                        />
+                        <Button
+                          label={
+                            c.kind === "return"
+                              ? "Stop return reminders"
+                              : "Stop warranty reminders"
+                          }
+                          onPress={() =>
+                            changeCue(c.record, { type: "stop", kind: c.kind })
+                          }
+                        />
+                      </>,
                     )}
-                    {text(
-                      r.facts.find((f) => f.field === "merchant")?.value ??
-                        "Merchant unknown",
-                    )}
-                    <Button
-                      label="Open saved purchase"
-                      onPress={() => {
-                        setSelected(r);
-                        setPreview(false);
-                      }}
-                    />
-                  </>,
-                )}
-              </View>
-            ))}
-          </>
-        )}
-        {!capture && !selected && tab === "Timeline" && (
-          <>
-            {title("Coming soon")}
-            {text(
-              "Calendar dates use Asia/Manila. No background push is enabled.",
-            )}
-            {cues
-              .sort((a, b) => a.scheduledFor.localeCompare(b.scheduledFor))
-              .map((c) => (
-                <View key={c.id}>
-                  {card(
-                    <>
-                      {title(
-                        `${c.kind === "return" ? "Return window" : "Warranty"} reminder`,
-                      )}
-                      {text(`${c.scheduledFor} · deadline ${c.dueDate}`)}
-                      {text(
-                        c.record.facts.find((f) => f.field === "item")?.value ??
-                          "Purchase",
-                      )}
-                      <Button
-                        label="View purchase & evidence"
-                        onPress={() => setSelected(c.record)}
-                      />
-                      <Button
-                        label="Dismiss this reminder"
-                        onPress={() =>
-                          changeCue(c.record, { type: "dismiss", cueId: c.id })
-                        }
-                      />
-                      <Button
-                        label="Remind tomorrow"
-                        disabled={tomorrow > c.dueDate}
-                        onPress={() =>
-                          changeCue(c.record, {
-                            type: "snooze",
-                            cueId: c.id,
-                            date: tomorrow,
-                          })
-                        }
-                      />
-                      <Button
-                        label={
-                          c.kind === "return"
-                            ? "Stop return reminders"
-                            : "Stop warranty reminders"
-                        }
-                        onPress={() =>
-                          changeCue(c.record, { type: "stop", kind: c.kind })
-                        }
-                      />
-                    </>,
-                  )}
-                </View>
-              ))}
-          </>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+                  </View>
+                ))}
+            </>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </ActionControlsContext.Provider>
   );
 }
 const styles = StyleSheet.create({
@@ -1730,16 +1751,6 @@ const styles = StyleSheet.create({
   body: { fontSize: 15, lineHeight: 23 },
   card: { padding: 20, borderRadius: 20, gap: 14 },
   row: { flexDirection: "row", flexWrap: "wrap", gap: 8, alignItems: "center" },
-  button: {
-    minHeight: 48,
-    paddingVertical: 13,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  primary: { backgroundColor: "#28664E", borderColor: "#28664E" },
   input: {
     borderWidth: 1,
     borderRadius: 10,

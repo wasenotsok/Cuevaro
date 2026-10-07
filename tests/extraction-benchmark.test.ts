@@ -134,7 +134,10 @@ it("measures the quality-gated real OCR pipeline over ugly synthetic inputs with
     const started = performance.now();
     const quality = await imageQuality(bytes);
     const sha256 = createHash("sha256").update(bytes).digest("hex");
-    writeFileSync(`.local/extraction-benchmark-v2/${name}.png`, bytes);
+    writeFileSync(
+      `.local/extraction-benchmark-v2/${name}.${name === "jpeg_artifacts" ? "jpg" : "png"}`,
+      bytes,
+    );
     if (!mayExtract(quality, true)) {
       skipped++;
       results.push({
@@ -205,7 +208,15 @@ it("measures the quality-gated real OCR pipeline over ugly synthetic inputs with
   expect(extracted).toBeGreaterThanOrEqual(4);
   expect(falseHighConfidence).toBe(0);
   expect(results[0].sha256).toBe(results[1].sha256);
-  for (const name of ["crisp", "duplicate", "missing_fields", "ambiguous_date"])
+  for (const name of [
+    "crisp",
+    "duplicate",
+    "missing_fields",
+    "ambiguous_date",
+    "relative_policy",
+    "conflicting_deadline",
+    "unlabeled_merchant",
+  ])
     expect(results.find((r) => r.case === name)?.outcome).toBe(
       "review_required",
     );
