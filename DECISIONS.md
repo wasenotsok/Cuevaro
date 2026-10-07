@@ -228,3 +228,9 @@ Reuse tenant authorization and transactional record snapshots. Export structured
 **Date:** 2026-10-06
 
 Use a bounded uncompressed ZIP (fflate) and SDK-matched Expo sharing, preserving JSON facts/history/cues and exact local current/retained originals. Require explicit plaintext/destination/copy consequences, verify original hashes and ordered capture identity, and refuse queued corrections. Record request-only metadata in the existing aggregate cache; preserve it across server corrections. Retain owned native cache ZIPs until explicit cleanup because Android destinations may read after chooser resolution. Rediscover owned files after restart; do not delete unrelated captures or claim recall of external copies. No new server/public export or cloud backup claim.
+
+## D-030 - Stable accessible development controls and honest native preparation
+**Status:** Locally verified; native/managed acceptance open
+**Date:** 2026-10-07
+
+Keep ActionButton at module scope so fact confirmation does not remount a focused control; reuse current busy/theme context and show focus visibly. Reject invalid calendar corrections before durable queue/transport; associate an assertive inline error with the input and preserve Unknown as an explicit choice. Require selected semantic benchmark cases to reach review so their Unknown assertions cannot silently skip. Add SDK-matched expo-system-ui for automatic native theme. Android prebuild/static configuration is preparation only; preserve TLS verification and the existing dependency release gate. See native prerequisites and physical acceptance separately.

@@ -3,7 +3,7 @@
   "items": [
     {
       "key": "phase-0",
-      "display_name": "Phase 0 \u00e2\u20ac\u201d Product Definition and Commercial Blueprint",
+      "display_name": "Phase 0 â€” Product Definition and Commercial Blueprint",
       "type": "phase",
       "status": "completed",
       "completed_at": "2026-10-05T18:09:00+08:00",
@@ -13,7 +13,7 @@
     },
     {
       "key": "phase-1",
-      "display_name": "Phase 1 \u00e2\u20ac\u201d Engineering Foundation",
+      "display_name": "Phase 1 â€” Engineering Foundation",
       "type": "phase",
       "status": "in_progress",
       "dependencies": [
@@ -23,7 +23,7 @@
     },
     {
       "key": "phase-2",
-      "display_name": "Phase 2 \u00e2\u20ac\u201d Capture and Quality Gate",
+      "display_name": "Phase 2 â€” Capture and Quality Gate",
       "type": "phase",
       "status": "planned",
       "dependencies": [
@@ -32,7 +32,7 @@
     },
     {
       "key": "phase-3",
-      "display_name": "Phase 3 \u00e2\u20ac\u201d Intelligent Purchase Lifecycle",
+      "display_name": "Phase 3 â€” Intelligent Purchase Lifecycle",
       "type": "phase",
       "status": "planned",
       "dependencies": [
@@ -41,7 +41,7 @@
     },
     {
       "key": "phase-4",
-      "display_name": "Phase 4 \u00e2\u20ac\u201d Watch, Remind, Act",
+      "display_name": "Phase 4 â€” Watch, Remind, Act",
       "type": "phase",
       "status": "planned",
       "dependencies": [
@@ -50,7 +50,7 @@
     },
     {
       "key": "phase-5",
-      "display_name": "Phase 5 \u00e2\u20ac\u201d Trust, Desktop Companion, and Household Readiness",
+      "display_name": "Phase 5 â€” Trust, Desktop Companion, and Household Readiness",
       "type": "phase",
       "status": "planned",
       "dependencies": [
@@ -59,7 +59,7 @@
     },
     {
       "key": "phase-6",
-      "display_name": "Phase 6 \u00e2\u20ac\u201d Closed Alpha",
+      "display_name": "Phase 6 â€” Closed Alpha",
       "type": "phase",
       "status": "planned",
       "dependencies": [
@@ -68,7 +68,7 @@
     },
     {
       "key": "phase-7",
-      "display_name": "Phase 7 \u00e2\u20ac\u201d Commercial Beta / V1",
+      "display_name": "Phase 7 â€” Commercial Beta / V1",
       "type": "phase",
       "status": "planned",
       "dependencies": [
@@ -351,6 +351,26 @@
         "Native sharing mocked; physical SDK/devices unavailable",
         "Generated OCR is not representative calibration",
         "Phase 1/managed/dependency gates open"
+      ]
+    },
+    {
+      "event_id": "cuevaro-keyboard-validation-native-preparation",
+      "timestamp": "2026-10-07T15:50:00Z",
+      "date": "2026-10-07",
+      "actor": "Development",
+      "event_type": "implementation",
+      "title": "Reproduced and repaired quick-reply focus loss, accessible invalid-correction refusal and non-vacuous semantic benchmark checks; Android preparation",
+      "evidence": [
+        "apps/mobile/action-button.tsx",
+        "tests/e2e/mobile.spec.ts",
+        "tests/extraction-benchmark.test.ts",
+        "docs/VALIDATION.md",
+        "docs/NATIVE_VALIDATION.md"
+      ],
+      "limitations": [
+        "80 unit/integration and 15 browser journeys are local synthetic evidence",
+        "Android prebuild succeeded; Java 8 Gradle TLS failure and missing SDK/device block compilation/acceptance",
+        "iOS requires separate macOS/Xcode/hardware; managed access and release dependency gate remain open"
       ]
     }
   ]

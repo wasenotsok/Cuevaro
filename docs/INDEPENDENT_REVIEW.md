@@ -52,3 +52,7 @@ Initial inner join could omit a missing page byte row and still export the remai
 ## Device archive review - 2026-10-06
 
 No actionable security/integrity issue found. Review confirmed byte/order hashes, safe ZIP names, queued-edit refusal, explicit plaintext warning, request-only events, scoped cleanup and restart discovery. Added actual multi-page/replaced-first-page archive coverage after review identified that evidence limit. Native sharing remains mocked and requires physical device/file-provider validation.
+
+## Keyboard/error/native preparation review - 2026-10-07
+
+Read-only independent review found no consequential regression. Invalid correction validation returns before durable queue or transport; error association/hint/assertive feedback are explicit. Required semantic outcomes prevent silent quality-blocked skips. Stable module-scope ActionButton fixes remount-caused focus loss while context retains current busy and theme behavior; the browser regression asserts retained focus after activation. Focus styling changes presentation only. Native focus, automatic theme, VoiceOver/TalkBack and OS text scaling remain hardware-unverified. Reviewer did not duplicate the running suite or edit files.

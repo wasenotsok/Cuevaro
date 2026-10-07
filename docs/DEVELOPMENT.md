@@ -10,10 +10,12 @@ The authorization suite runs the migration and attacks against actual embedded P
 
 Fixture policy: generated receipts only, clearly synthetic merchants and products. No real receipts, customer data, credentials, or raw content in logs. `.local/`, device caches, generated builds and environment files are ignored. The source-pattern scanner is a baseline and cannot replace full secret scanning or review.
 
-Deployment gates remain open: provider/region and privacy review, private staging, hardware camera/secure-storage testing, signed builds, notification delivery, restore, and external-user authorization. A local build never constitutes a release.
+Supabase Free/Singapore is approved for synthetic private development; secure access and approved identities remain unavailable. Gates remain open for managed integration/privacy verification, private staging/hosting, hardware camera/secure-storage testing, signed builds, notification delivery, restore, and external-user authorization. A local build never constitutes a release.
 
 ## Run the synthetic receipt slice
 
 Run `npm run dev:api` in one terminal. Run `npm run build:mobile` then `node scripts/serve-preview.mjs` in another. Open `http://127.0.0.1:4187`, enter the explicitly synthetic preview, and choose **Try synthetic receipt**. The API binds only `127.0.0.1:4329`, uses embedded PostgreSQL and bundled local OCR, and sends no receipt to a cloud AI provider. This harness is deliberately a development-computer workflow; native ordinary use must eventually connect to the approved managed backend without a desktop dependency.
 
 All browser originals are synthetic; IndexedDB is not claimed encrypted. Native camera/library import preserves bytes into SQLCipher before quality checks. Pending evidence remains after failure/restart until a verified durable acknowledgment; this slice retains the original even after acknowledgment. No cloud backup or push capability is implied by local state.
+
+Android prebuild and separate Android/iOS hardware prerequisites are recorded in [native validation](NATIVE_VALIDATION.md). Prebuild is generated source preparation, not a compiled binary.

@@ -1,11 +1,28 @@
 # Cuevaro Current Status
 
-Status date: 2026-10-06
+Status date: 2026-10-07
 Project registry status: active  
 Implementation state: **Phase 1 in progress; synthetic local receipt-to-lifecycle development slice verified**
 
 Current objective:
 Complete the engineering foundation and the mobile-first receipt-to-lifecycle slice under the Owner's continuous development authority. The existing roadmap gates remain binding; no phase is being closed from browser or bundle evidence alone.
+
+## Current checkpoint and queue - 2026-10-07
+
+Branch `feat/mobile-foundation`; main remains `33b2b6864817720ce7f720d4f2057bc28ce2f74a`. [Draft PR #1](https://github.com/wasenotsok/Cuevaro/pull/1) is unmerged. Dated checkpoints below are historical evidence, not the current next-work queue.
+
+The synthetic slice includes ordered photo pages, real local OCR/embedded-text PDF parsing, explicit item/consequential-fact review, immutable corrections/offline replay, supported dates/Unknown, preserved reminder intent, retrieval and on-device single-record ZIP export. Automatic native managed extraction and real device acceptance remain incomplete; ordinary native use must not depend on the browser harness's development computer.
+
+Latest local verification: **80 unit/integration tests, 15 browser journeys**, strict typechecking, source-pattern scan, formatting and Android/iOS/web exports pass. Actual Tab/Enter journeys in light/dark at enlarged text reproduced and repaired quick-reply focus loss. Invalid calendar corrections now produce an associated, contrast-checked error before saving a pending command. Synthetic relative-policy/conflicting-deadline/unlabeled-merchant checks must execute through review, rather than passing if quality-blocked. See [validation](docs/VALIDATION.md) and [review](docs/INDEPENDENT_REVIEW.md).
+
+Current sequence, while Phase 1 remains open:
+1. Complete exact-head PR CI/review per contribution; keep the dependency gate enforced and repair available upstream fixes. Historical green runs do not verify newer heads.
+2. Android source preparation succeeds, including automatic-theme system UI and SQLCipher/Hermes flags. Native compilation is blocked by Java 8 trust failure fetching Gradle; compatible JDK, Android SDK and hardware are absent. Follow [native validation](docs/NATIVE_VALIDATION.md); do not bypass TLS or infer hardware acceptance from prebuild/export. iOS independently needs macOS/Xcode and physical hardware.
+3. Supabase Free/Singapore is already Owner-approved for synthetic private development. Await non-secret project reference, approved developer identities and access through the existing secure process; then exercise managed authorization/private storage/revocation/restore. No credential or provider setup occurred. Private mobile-accessible Node API/worker hosting remains an external decision.
+4. Continue scoped local regression/adapter repairs when evidence warrants them. Generated benchmarks are not representative calibration; legally usable camera inputs and hardware are required. Scanned PDFs, native PDF viewing and share-sheet/barcode remain incomplete V1 work, rather than claims of finished support.
+5. Later gates require durable notifications, managed retention/deletion/restore and approved privacy/release decisions. Do not advance phases or activate paid/public services to obtain evidence.
+
+Dependency release gate remains blocked by documented upstream braces/node-forge advisories. No waiver, merge or deployment occurred. [Dependency limits](docs/DEPENDENCY_RISK.md) distinguish the clean API surface from the complete mobile toolchain. Firstborn/Atlas remain untouched; Cuevaro history is maintained here.
 
 ## Implementation checkpoint — 2026-10-05
 
@@ -26,7 +43,7 @@ Verified evidence is described in [docs/VALIDATION.md](docs/VALIDATION.md). This
 
 Final pre-review head `5c0d52f84ff235e7e0da90f10e762199935cac49` separately completed [PR CI 37332080788](https://github.com/wasenotsok/Cuevaro/actions/runs/37332080788): verification passed; dependency gate failed. [Independent review](docs/INDEPENDENT_REVIEW.md) then found and verified repairs for reminder recovery, final worker retry, native temporary-file ownership/cleanup and observation reason preservation. These later fixes require their own checks and do not inherit historical CI. A concrete [private managed-service proposal](docs/PRIVATE_DEVELOPMENT_PLAN.md) is prepared; nothing was activated.
 
-## Next safe work and external gates
+## Historical implementation and gate checkpoints - 2026-10-06
 
 2026-10-06 local checkpoint: shared bounded document-region preflight adds visible cut-off, skew, perspective, large obstruction and interior washout advice. Independent review reproduced background-colored edge covers; all pixel-only captures therefore retain unverified completeness and require conscious continuation before OCR. No arbitrary aspect-ratio rule can prove a complete receipt. Native source pixel budgets and bounded preview dimensions were tightened. Supabase provider/region approval is recorded below; managed access remains pending.
 
@@ -146,15 +163,15 @@ Do not begin by building every future Life Admin category.
 
 ## Known open decisions before/within Phase 1
 
-- final backend framework within the recommended TypeScript/managed-Postgres direction;
-- exact cloud provider/region;
+- production hosting/delivery path for the selected Fastify/TypeScript API and worker;
+- secure access and approved identities for the Owner-approved Supabase Free/Singapore development project;
 - initial launch geography beyond the Philippines validation context;
 - formal Cuevaro trademark clearance;
 - final pricing after unit-cost/willingness-to-pay evidence;
 - final benchmark thresholds;
 - whether Family sharing is public V1 or immediate post-V1.
 
-These are explicit open decisions, not missing documentation.
+These remaining decisions do not reopen the already approved development provider/region. See the current queue above.
 
 ## Correction and rescheduling checkpoint - 2026-10-06
 
