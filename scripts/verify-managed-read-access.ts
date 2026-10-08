@@ -39,7 +39,10 @@ async function run() {
   requireExpectedDenial(invalid.error, "auth");
   const anonymous = await client().from("households").select("id").limit(1);
   if (!anonymous.error) throw Error("ANONYMOUS_TABLE_ACCESS");
-  requireExpectedDenial(anonymous.error, "database");
+  requireExpectedDenial(
+    { ...anonymous.error, status: anonymous.status },
+    "database",
+  );
   const own = await user
     .from("households")
     .select("id")

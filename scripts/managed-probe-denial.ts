@@ -9,7 +9,10 @@ export function expectedDenial(
     statusCode?: unknown;
     code?: unknown;
   };
-  if (kind === "database") return value.code === "42501";
+  if (kind === "database")
+    return (
+      value.code === "42501" && [401, 403].includes(value.status as number)
+    );
   if (kind === "auth") return value.status === 401 || value.status === 403;
   return [403, 404, "403", "404"].includes(value.statusCode as number | string);
 }

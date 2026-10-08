@@ -19,8 +19,12 @@ it("real API probe denial evidence rejects outages, invalid requests and empty r
   expect(expectedDenial({ statusCode: 403 }, "storage")).toBe(true);
   expect(expectedDenial({ status: 401 }, "auth")).toBe(true);
   expect(expectedDenial({ status: 503 }, "auth")).toBe(false);
-  expect(expectedDenial({ code: "42501" }, "database")).toBe(true);
+  expect(expectedDenial({ code: "42501", status: 403 }, "database")).toBe(true);
   expect(expectedDenial({ code: "08006" }, "database")).toBe(false);
+  expect(expectedDenial({ code: "42501", status: 503 }, "database")).toBe(
+    false,
+  );
+  expect(expectedDenial({ code: "42501" }, "database")).toBe(false);
   expect(() => requireExpectedDenial(null, "storage")).toThrow(
     "API_DENIAL_INCONCLUSIVE",
   );
