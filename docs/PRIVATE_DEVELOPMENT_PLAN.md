@@ -2,6 +2,9 @@
 
 Prepared 2026-10-05; Owner approved Supabase Free in Singapore (`ap-southeast-1`) on 2026-10-06 for synthetic data and explicitly approved developer identities. **No account, credentials or deployment created**. Secure project access, project reference and approved identity list are not available in this workspace. Phase 1 and all external release gates remain open. This follows the canonical Supabase/Postgres/Auth/private-storage and modular API plus durable worker architecture.
 
+
+Current2026-10-08 update: Owner selected existing Cuevaro Development, wqwapaklrfpckhgjsejf. Management connector access and PostgreSQL17.11 are independently verified. Parent applied reviewed atomic baseline20261008022037 and passed managed SQL-role checks; [current managed evidence](MANAGED_DEVELOPMENT_VALIDATION.md) records exact mapping and retained advisor findings. Earlier preparation text above is historical. No identity/password/key was created by this task; approved Auth identities and secure runtime configuration remain unavailable (Auth users0). Managed StorageAPI/expiry/restore, private API hosting and real native acceptance remain open.
+
 ## Least-cost proposal
 
 Use one Owner-controlled **Supabase Free** development project in the approved region **Singapore (`ap-southeast-1`)**, near the documented early Philippine validation market. Region approval is not a legal compliance conclusion. Confirm availability in the dashboard; do not silently choose another region. [Official regions](https://supabase.com/docs/guides/platform/regions).

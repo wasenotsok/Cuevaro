@@ -56,3 +56,9 @@ No actionable security/integrity issue found. Review confirmed byte/order hashes
 ## Keyboard/error/native preparation review - 2026-10-07
 
 Read-only independent review found no consequential regression. Invalid correction validation returns before durable queue or transport; error association/hint/assertive feedback are explicit. Required semantic outcomes prevent silent quality-blocked skips. Stable module-scope ActionButton fixes remount-caused focus loss while context retains current busy and theme behavior; the browser regression asserts retained focus after activation. Focus styling changes presentation only. Native focus, automatic theme, VoiceOver/TalkBack and OS text scaling remain hardware-unverified. Reviewer did not duplicate the running suite or edit files.
+
+## Managed adapter and migration artifact review - 2026-10-08
+
+Read-only local review found no consequential defect. Path guards match existing household/capture/original and page paths, reject tenant/page/traversal mismatches and preserve immutable uploads. Frozen WeakMap identity and fresh token/membership checks before storage and after metadata cover modeled revocation. All normalized source and bundle SHA256 values match; all seven migrations are included modulo removed transaction wrappers. Bundle depends on the parent atomic apply_migration transaction. Role checks rollback on success; failures require rollback/connection close. No reviewer remote writes or duplicate suite. Actual StorageAPI, bearer expiry/revocation after issue and managed backup remain open.
+
+Probe review reproduced an evidence defect: network/server errors and empty batch results could count as successful access denial. Repair requires expected Auth401/403, PostgREST42501 or Storage403/404; other/empty responses classify inconclusive. Added regression; follow-up found no remaining consequential defect. No successful real API acceptance is claimed.

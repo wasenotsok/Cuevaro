@@ -1,24 +1,30 @@
 # Cuevaro Current Status
 
-Status date: 2026-10-07
+Status date: 2026-10-08
 Project registry status: active  
-Implementation state: **Phase 1 in progress; synthetic local receipt-to-lifecycle development slice verified**
+Implementation state: **Phase 1 in progress; local slice and managed SQL verification complete; API/native gates open**
 
 Current objective:
 Complete the engineering foundation and the mobile-first receipt-to-lifecycle slice under the Owner's continuous development authority. The existing roadmap gates remain binding; no phase is being closed from browser or bundle evidence alone.
 
-## Current checkpoint and queue - 2026-10-07
+## Managed development checkpoint - 2026-10-08
+
+The Owner designated existing Supabase **Cuevaro Development**, `wqwapaklrfpckhgjsejf`, Singapore/Free. This task independently verified authorized management read access and an empty PG17.11 application baseline; project reference/access is no longer unknown. Parent is the sole migration executor. Parent applied reviewed ordered001–006 plus forward storage-operation hardening atomically as managed migration20261008022037. Desktop performed no managed write and independently verified history/catalog afterward. Parent SQL-role/privilege/isolation/FK/revocation checks passed and rolled back all synthetic rows; advisors retain documented warnings/information, not a clean result.
+
+Read-only/SQL access does not establish Auth/Storage API acceptance. Zero Auth users and absent approved identity/runtime configuration block authenticated upload, expiry/hash and managed restore evidence. A secure environment-only read probe and exact API test steps are prepared in [managed validation](docs/MANAGED_DEVELOPMENT_VALIDATION.md). No account/password/key was created or requested in chat. Scope and all Phase1/native/dependency gates remain unchanged. Earlier dated implementation evidence below is preserved.
+
+## Current implementation queue - 2026-10-08
 
 Branch `feat/mobile-foundation`; main remains `33b2b6864817720ce7f720d4f2057bc28ce2f74a`. [Draft PR #1](https://github.com/wasenotsok/Cuevaro/pull/1) is unmerged. Dated checkpoints below are historical evidence, not the current next-work queue.
 
 The synthetic slice includes ordered photo pages, real local OCR/embedded-text PDF parsing, explicit item/consequential-fact review, immutable corrections/offline replay, supported dates/Unknown, preserved reminder intent, retrieval and on-device single-record ZIP export. Automatic native managed extraction and real device acceptance remain incomplete; ordinary native use must not depend on the browser harness's development computer.
 
-Latest local verification: **80 unit/integration tests, 15 browser journeys**, strict typechecking, source-pattern scan, formatting and Android/iOS/web exports pass. Actual Tab/Enter journeys in light/dark at enlarged text reproduced and repaired quick-reply focus loss. Invalid calendar corrections now produce an associated, contrast-checked error before saving a pending command. Synthetic relative-policy/conflicting-deadline/unlabeled-merchant checks must execute through review, rather than passing if quality-blocked. See [validation](docs/VALIDATION.md) and [review](docs/INDEPENDENT_REVIEW.md).
+Latest local verification: **89 unit/integration tests across nineteen files, 15 browser journeys**, strict typechecking, source-pattern scan, formatting and Android/iOS/web exports pass. Actual Tab/Enter journeys in light/dark at enlarged text reproduced and repaired quick-reply focus loss. Invalid calendar corrections now produce an associated, contrast-checked error before saving a pending command. Synthetic relative-policy/conflicting-deadline/unlabeled-merchant checks must execute through review, rather than passing if quality-blocked. Managed adapter/policy tests and exact parent evidence artifacts add SQL/revocation/denial/failure coverage. See [validation](docs/VALIDATION.md), [managed receipt](docs/managed-database-evidence-2026-10-08.json) and [review](docs/INDEPENDENT_REVIEW.md).
 
 Current sequence, while Phase 1 remains open:
 1. Complete exact-head PR CI/review per contribution; keep the dependency gate enforced and repair available upstream fixes. Historical green runs do not verify newer heads.
 2. Android source preparation succeeds, including automatic-theme system UI and SQLCipher/Hermes flags. Native compilation is blocked by Java 8 trust failure fetching Gradle; compatible JDK, Android SDK and hardware are absent. Follow [native validation](docs/NATIVE_VALIDATION.md); do not bypass TLS or infer hardware acceptance from prebuild/export. iOS independently needs macOS/Xcode and physical hardware.
-3. Supabase Free/Singapore is already Owner-approved for synthetic private development. Await non-secret project reference, approved developer identities and access through the existing secure process; then exercise managed authorization/private storage/revocation/restore. No credential or provider setup occurred. Private mobile-accessible Node API/worker hosting remains an external decision.
+3. Supabase Free/Singapore is already Owner-approved for synthetic private development. Project reference and management connector access are now verified (October8); approved developer identities and secure runtime API configuration remain unavailable. Parent applied the reviewed atomic baseline and verified managed SQL-role isolation/privileges; real Auth/private StorageAPI/expiry/restore acceptance remains open. No credential or provider setup occurred. Private mobile-accessible Node API/worker hosting remains an external decision.
 4. Continue scoped local regression/adapter repairs when evidence warrants them. Generated benchmarks are not representative calibration; legally usable camera inputs and hardware are required. Scanned PDFs, native PDF viewing and share-sheet/barcode remain incomplete V1 work, rather than claims of finished support.
 5. Later gates require durable notifications, managed retention/deletion/restore and approved privacy/release decisions. Do not advance phases or activate paid/public services to obtain evidence.
 
@@ -164,7 +170,7 @@ Do not begin by building every future Life Admin category.
 ## Known open decisions before/within Phase 1
 
 - production hosting/delivery path for the selected Fastify/TypeScript API and worker;
-- secure access and approved identities for the Owner-approved Supabase Free/Singapore development project;
+- approved identities and secure Auth/Storage runtime configuration for the verified Owner-approved Supabase Free/Singapore project;
 - initial launch geography beyond the Philippines validation context;
 - formal Cuevaro trademark clearance;
 - final pricing after unit-cost/willingness-to-pay evidence;

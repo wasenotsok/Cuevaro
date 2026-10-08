@@ -28,6 +28,12 @@ it("reviewed atomic baseline matches its source manifest and rollback-only role 
     await pg.exec(
       readFileSync("supabase/tests/managed-role-checks.sql", "utf8"),
     );
+    await pg.exec(
+      readFileSync(
+        "supabase/tests/cuevaro-managed-supplemental-role-checks.sql",
+        "utf8",
+      ),
+    );
     expect(
       (await pg.query("select * from public.households")).rows,
     ).toHaveLength(0);

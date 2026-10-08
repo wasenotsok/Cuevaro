@@ -372,6 +372,47 @@
         "Android prebuild succeeded; Java 8 Gradle TLS failure and missing SDK/device block compilation/acceptance",
         "iOS requires separate macOS/Xcode/hardware; managed access and release dependency gate remain open"
       ]
+    },
+    {
+      "event_id": "cuevaro-managed-baseline-review-storage-signing-hardening",
+      "timestamp": "2026-10-08T02:16:05Z",
+      "date": "2026-10-08",
+      "actor": "Development",
+      "event_type": "implementation",
+      "title": "Verified named managed read access, reviewed atomic migration handoff and repaired client signed URL bypass",
+      "evidence": [
+        "supabase/reviewed/manifest.json",
+        "supabase/tests/managed-role-checks.sql",
+        "tests/managed-adapter.test.ts",
+        "tests/storage-policy.test.ts",
+        "tests/migration-bundle.test.ts",
+        "docs/MANAGED_DEVELOPMENT_VALIDATION.md"
+      ],
+      "limitations": [
+        "Parent is sole migration executor; desktop performed no managed mutation",
+        "Zero Auth users; approved identities and secure runtime config unavailable",
+        "Actual Auth/Storage/expiry/restore and native acceptance remain open; dependency gate enforced"
+      ]
+    },
+    {
+      "event_id": "cuevaro-managed-atomic-baseline-applied-sql-verified",
+      "timestamp": "2026-10-08T02:25:24Z",
+      "date": "2026-10-08",
+      "actor": "Parent-coordinated development executor",
+      "event_type": "validation",
+      "title": "Applied atomic baseline20261008022037 once and passed managed SQL-role/isolation/privilege/history checks",
+      "evidence": [
+        "supabase/reviewed/manifest.json",
+        "supabase/tests/managed-role-checks.sql",
+        "docs/MANAGED_DEVELOPMENT_VALIDATION.md"
+      ],
+      "migration_version": "20261008022037",
+      "bundle_sha256": "fc98ebf1afa8283f7e1400898db144a1b24acca63aa12331fccbf61b9cc85b13",
+      "limitations": [
+        "SQL-role simulation is not Auth/StorageAPI login/upload/expiry proof",
+        "Advisors retain reviewed bootstrap warning, intentional deny-all policy information and index information",
+        "Managed backup/restore/native hardware/dependency release gate remain open"
+      ]
     }
   ]
 }

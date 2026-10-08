@@ -39,7 +39,7 @@ Gate:
 
 Goal: establish the secure mobile-first skeleton.
 
-Current 2026-10-07 queue: exact-head CI/review and enforced dependency gate; Android native preparation followed by compatible JDK/SDK/device acceptance; separate macOS/Xcode/iOS hardware acceptance; approved Supabase Free/Singapore access and real managed authorization/storage/restore; mobile-accessible private API/worker hosting. Safe regression work continues when evidence warrants it. Keyboard focus/error fixes and required semantic benchmark execution are locally verified with 80 tests/15 browser journeys. These contributions do not close Phase 1. See [current status](CURRENT_STATUS.md) and [native validation](docs/NATIVE_VALIDATION.md).
+Current 2026-10-07 queue: exact-head CI/review and enforced dependency gate; Android native preparation followed by compatible JDK/SDK/device acceptance; separate macOS/Xcode/iOS hardware acceptance; approved Supabase Free/Singapore project management access (verified October8), parent-applied atomic baseline20261008022037 and passed managed SQL-role verification; real Auth/Storage/expiry/restore API acceptance remains open; mobile-accessible private API/worker hosting. Safe regression work continues when evidence warrants it. Keyboard focus/error fixes and required semantic benchmark execution are locally verified with 80 tests/15 browser journeys. These contributions do not close Phase 1. See [current status](CURRENT_STATUS.md) and [native validation](docs/NATIVE_VALIDATION.md).
 
 Scope:
 - monorepo and CI;

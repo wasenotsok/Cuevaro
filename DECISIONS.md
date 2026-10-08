@@ -234,3 +234,9 @@ Use a bounded uncompressed ZIP (fflate) and SDK-matched Expo sharing, preserving
 **Date:** 2026-10-07
 
 Keep ActionButton at module scope so fact confirmation does not remount a focused control; reuse current busy/theme context and show focus visibly. Reject invalid calendar corrections before durable queue/transport; associate an assertive inline error with the input and preserve Unknown as an explicit choice. Require selected semantic benchmark cases to reach review so their Unknown assertions cannot silently skip. Add SDK-matched expo-system-ui for automatic native theme. Android prebuild/static configuration is preparation only; preserve TLS verification and the existing dependency release gate. See native prerequisites and physical acceptance separately.
+
+## D-031 - Named managed development target and server-only bounded signing
+**Status:** Owner-authorized target; managed atomic baseline/SQL checks verified; API acceptance open
+**Date:** 2026-10-08
+
+Use existing Cuevaro Development wqwapaklrfpckhgjsejf in approved Singapore/Free. Parent coordinates the sole atomic migration executor; preserve ordered source hashes and prevent intermediate broad default ACL exposure. Restrict evidence storage SELECT to authenticated raw-download operation, denying direct client signing/list/metadata/S3 paths. Revalidate identity/membership before server60-second signing and validate stored capture/page identity. Bearer URLs already issued remain usable until expiry; never claim immediate recall. No new identity/credential or public host is inferred from management access.
