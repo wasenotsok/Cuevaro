@@ -451,6 +451,22 @@
         "Auth identities approved; Owner-only credentials and no-bypass verification boundary remain",
         "Phase1/native/dependency release gates open"
       ]
+    },
+    {
+      "event_id": "cuevaro-postgres17-ci-check",
+      "timestamp": "2026-10-08T03:49:00Z",
+      "date": "2026-10-08",
+      "actor": "Development",
+      "event_type": "validation",
+      "title": "Real PostgreSQL17 check step passed after correcting Stop assertion",
+      "head": "ce50a3d1288fb44835336874d5b152f83cb67417",
+      "evidence": [
+        "https://github.com/wasenotsok/Cuevaro/actions/runs/37724288431"
+      ],
+      "limitations": [
+        "Remaining CI browser/export steps still running at record time",
+        "Managed Auth/Storage/native/dependency gates remain open"
+      ]
     }
   ]
 }
