@@ -1,6 +1,9 @@
+import type { SqlDatabase } from "../../packages/providers/database";
+import type { Actor } from "../../packages/domain/authority";
+import type { OriginalStore } from "./originals";
 import { getRecords } from "./records";
 import { correctionSchema } from "../../packages/domain/corrections";
-import Fastify from "fastify";
+import Fastify, { type FastifyRequest } from "fastify";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { mkdirSync } from "node:fs";
@@ -69,9 +72,16 @@ const attention = z
     ]),
   })
   .strict();
-export async function buildApi(
-  db: Awaited<ReturnType<typeof openDevelopmentDb>>,
-) {
+export interface ApiOptions {
+  resolveActor: (request: FastifyRequest, write: boolean) => Promise<Actor>;
+  originals: OriginalStore;
+  evidenceUrl: (actor: Actor, id: string) => Promise<string>;
+}
+export async function buildApi(db: SqlDatabase, options?: ApiOptions) {
+  const actor = (request: FastifyRequest, write = false) =>
+    options
+      ? options.resolveActor(request, write)
+      : Promise.resolve(developmentActor);
   const app = Fastify({ logger: false, bodyLimit: 28000000 });
   app.addHook("onRequest", async (req, res) => {
     if (!/^(localhost|127\.0\.0\.1)(:(4329|80))?$/.test(req.headers.host ?? ""))
@@ -92,7 +102,9 @@ export async function buildApi(
       return res
         .header(
           "Access-Control-Allow-Headers",
-          "Content-Type,X-Cuevaro-Development",
+          options
+            ? "Content-Type,Authorization,X-Cuevaro-Household,X-Cuevaro-Development"
+            : "Content-Type,X-Cuevaro-Development",
         )
         .header("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
         .code(204)
@@ -106,45 +118,53 @@ export async function buildApi(
   app.setErrorHandler((error, req, res) => {
     const msg = error instanceof Error ? error.message : "";
     const code =
-      error instanceof z.ZodError
-        ? "INVALID_REQUEST"
-        : msg === "ACCESS_DENIED"
-          ? "ACCESS_DENIED"
-          : msg === "QUALITY_REVIEW_REQUIRED"
-            ? "QUALITY_REVIEW_REQUIRED"
-            : msg === "STATE_CONFLICT"
-              ? "STATE_CONFLICT"
-              : "OPERATION_FAILED";
+      msg === "UNAUTHENTICATED"
+        ? "UNAUTHENTICATED"
+        : error instanceof z.ZodError
+          ? "INVALID_REQUEST"
+          : msg === "ACCESS_DENIED"
+            ? "ACCESS_DENIED"
+            : msg === "QUALITY_REVIEW_REQUIRED"
+              ? "QUALITY_REVIEW_REQUIRED"
+              : msg === "STATE_CONFLICT"
+                ? "STATE_CONFLICT"
+                : "OPERATION_FAILED";
     res
-      .code(code === "ACCESS_DENIED" ? 403 : 400)
+      .code(
+        code === "UNAUTHENTICATED" ? 401 : code === "ACCESS_DENIED" ? 403 : 400,
+      )
       .send({ code, requestId: randomUUID() });
   });
   app.get("/v1/health", () => ({
-    environment: "local-synthetic-development",
-    managedAuth: false,
+    environment: options
+      ? "private-managed-development"
+      : "local-synthetic-development",
+    managedAuth: !!options,
     cloudBackup: false,
     push: false,
   }));
-  app.get("/v1/fixture", async (_req, res) =>
-    res
-      .type("image/png")
-      .send(await sharp(Buffer.from(syntheticReceiptSvg())).png().toBuffer()),
-  );
+  if (!options)
+    app.get("/v1/fixture", async (_req, res) =>
+      res
+        .type("image/png")
+        .send(await sharp(Buffer.from(syntheticReceiptSvg())).png().toBuffer()),
+    );
   app.post("/v1/captures", async (req) => {
     const b = body.parse(req.body);
     return createPageCapture(
       db,
-      developmentActor,
+      await actor(req, true),
       b.clientId,
       [
         Buffer.from(b.base64, "base64"),
         ...(b.additionalPages ?? []).map((p) => Buffer.from(p, "base64")),
       ],
       b.useAnyway,
+      options?.originals,
     );
   });
   app.get<{ Params: { id: string } }>("/v1/captures/:id", async (req) =>
-    getDraft(db, developmentActor, z.uuid().parse(req.params.id)),
+    getDraft(db, await actor(req), z.uuid().parse(req.params.id)),
   );
   app.post<{ Params: { id: string } }>(
     "/v1/captures/:id/confirm",
@@ -155,7 +175,7 @@ export async function buildApi(
         .safeParse(req.body);
       return confirmPurchase(
         db,
-        developmentActor,
+        await actor(req, true),
         z.uuid().parse(req.params.id),
         b.success ? b.data.values : values.parse(req.body),
         b.success ? b.data.itemChoices : undefined,
@@ -168,22 +188,33 @@ export async function buildApi(
       const b = attention.parse(req.body);
       return changeAttention(
         db,
-        developmentActor,
+        await actor(req, true),
         z.uuid().parse(req.params.id),
         b.command,
         b.version,
       );
     },
   );
-  app.get("/v1/records", () =>
-    db.transaction((tx) => getRecords(tx, developmentActor)),
-  );
+  app.get("/v1/records", async (req) => {
+    const verified = await actor(req);
+    return db.transaction((tx) => getRecords(tx, verified));
+  });
+  if (options)
+    app.get<{ Params: { id: string } }>(
+      "/v1/evidence/:id/access",
+      async (req) => ({
+        url: await options.evidenceUrl(
+          await actor(req),
+          z.uuid().parse(req.params.id),
+        ),
+      }),
+    );
   app.post<{ Params: { id: string } }>(
     "/v1/purchases/:id/corrections",
     async (req) =>
       correctPurchase(
         db,
-        developmentActor,
+        await actor(req, true),
         z.uuid().parse(req.params.id),
         correctionSchema.parse(req.body),
       ),

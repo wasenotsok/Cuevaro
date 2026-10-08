@@ -1,3 +1,10 @@
+import {
+  localOriginals,
+  assertOriginalManifest,
+  type OriginalStore,
+  type EvidenceOriginal,
+} from "./originals";
+import type { SqlDatabase, SqlQuery } from "../../packages/providers/database";
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
 import { createHash, randomUUID } from "node:crypto";
@@ -59,7 +66,7 @@ export async function openDevelopmentDb(path?: string) {
       readFileSync("supabase/migrations/202610050001_foundation.sql", "utf8"),
     );
     await db.exec(
-      `create table private.evidence_bytes(evidence_id uuid primary key references public.evidence_objects, original bytea not null); create table private.review_drafts(capture_id uuid primary key references public.captures, draft jsonb not null);`,
+      `create table private.evidence_bytes(evidence_id uuid primary key references public.evidence_objects, original bytea not null); create table private.review_drafts(capture_id uuid primary key, household_id uuid not null, draft jsonb not null, foreign key(capture_id,household_id) references public.captures(id,household_id));`,
     );
     await db.query(
       `insert into households(id,name,region,timezone) values($1,'Synthetic development household','PH','Asia/Manila')`,
@@ -70,6 +77,14 @@ export async function openDevelopmentDb(path?: string) {
       [developmentActor.householdId, developmentActor.userId],
     );
   }
+  // Upgrade only this local synthetic schema; managed migrations are never run here.
+  const reviewColumn = await db.query(
+    "select column_name from information_schema.columns where table_schema='private' and table_name='review_drafts' and column_name='household_id'",
+  );
+  if (!reviewColumn.rows.length)
+    await db.exec(
+      "alter table private.review_drafts add column household_id uuid;update private.review_drafts d set household_id=c.household_id from public.captures c where c.id=d.capture_id;alter table private.review_drafts alter column household_id set not null;alter table private.review_drafts add foreign key(capture_id,household_id) references public.captures(id,household_id);",
+    );
   const column = await db.query(
     "select column_name from information_schema.columns where table_schema='public' and table_name='evidence_objects' and column_name='page_number'",
   );
@@ -102,11 +117,7 @@ export async function openDevelopmentDb(path?: string) {
     );
   return db;
 }
-export async function assertActor(
-  db: Pick<PGlite, "query">,
-  actor: Actor,
-  write = false,
-) {
+export async function assertActor(db: SqlQuery, actor: Actor, write = false) {
   const { rows } = await db.query<{
     user_id: string;
     household_id: string;
@@ -154,7 +165,7 @@ export async function imageQuality(bytes: Uint8Array): Promise<Quality> {
   );
 }
 export async function createCapture(
-  db: PGlite,
+  db: SqlDatabase,
   actor: Actor,
   clientId: string,
   bytes: Uint8Array,
@@ -164,11 +175,12 @@ export async function createCapture(
   return createPageCapture(db, actor, clientId, [bytes], useAnyway);
 }
 export async function createPageCapture(
-  db: PGlite,
+  db: SqlDatabase,
   actor: Actor,
   clientId: string,
   originals: Uint8Array[],
   useAnyway: boolean,
+  store: OriginalStore = localOriginals,
 ) {
   await assertActor(db, actor, true);
   const hashes = originals.map((bytes) =>
@@ -206,7 +218,18 @@ export async function createPageCapture(
       if (old.content_hash !== hash) throw Error("IDEMPOTENCY_CONFLICT");
       return { id: old.id, hash, durable: true, duplicate: true };
     }
-    const id = randomUUID();
+    // Stable UUIDv5 namespace/name identity preserves external objects after rollback/lost ACK.
+    const digest = createHash("sha1")
+      .update(Buffer.from(actor.householdId.replaceAll("-", ""), "hex"))
+      .update(clientId)
+      .digest();
+    digest[6] = (digest[6] & 15) | 80;
+    digest[8] = (digest[8] & 63) | 128;
+    const hex = digest.subarray(0, 16).toString("hex");
+    const id =
+      store === localOriginals
+        ? randomUUID()
+        : `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
     await tx.query(
       `insert into captures(id,household_id,initiated_by_user_id,client_capture_id,state,content_hash,quality,captured_at) values($1,$2,$3,$4,'stored',$5,$6,now())`,
       [
@@ -240,10 +263,21 @@ export async function createPageCapture(
           index + 1,
         ],
       );
-      await tx.query(`insert into private.evidence_bytes values($1,$2)`, [
-        evidence,
+      await store.put(
+        tx,
+        actor,
+        {
+          id: evidence,
+          householdId: actor.householdId,
+          captureId: id,
+          storageKey: `${actor.householdId}/${id}/original${originals.length > 1 ? `-page-${index + 1}` : ""}`,
+          mime,
+          size: bytes.length,
+          sha256: hashes[index],
+          page: index + 1,
+        },
         bytes,
-      ]);
+      );
     }
     await tx.query(
       `insert into jobs(household_id,type,resource_id,idempotency_key) values($1,'extract',$2,$3)`,
@@ -256,7 +290,11 @@ export async function createPageCapture(
     return { id, hash, durable: true, duplicate: false };
   });
 }
-export async function runOneJob(db: PGlite, extract = extractOriginal) {
+export async function runOneJob(
+  db: SqlDatabase,
+  extract = extractOriginal,
+  store: OriginalStore = localOriginals,
+) {
   const job = await db.transaction(async (tx) => {
     const exhausted = await tx.query<{
       resource_id: string;
@@ -289,16 +327,30 @@ export async function runOneJob(db: PGlite, extract = extractOriginal) {
   try {
     const { rows } = await db.query<{
       id: string;
-      original: Uint8Array;
+      content_hash: string;
+      storage_key: string;
+      mime_type: string;
+      byte_size: number;
+      sha256: string;
       quality: Quality;
       initiated_by_user_id: string;
       page_number: number;
     }>(
-      `select e.id,b.original,e.page_number,c.quality,c.initiated_by_user_id from captures c join evidence_objects e on e.capture_id=c.id and e.household_id=c.household_id join private.evidence_bytes b on b.evidence_id=e.id where c.id=$1 and c.household_id=$2 and c.state in ('stored','processing','failed') order by e.page_number`,
+      `select e.id,c.content_hash,e.storage_key,e.mime_type,e.byte_size,e.sha256,e.page_number,c.quality,c.initiated_by_user_id from captures c join evidence_objects e on e.capture_id=c.id and e.household_id=c.household_id where c.id=$1 and c.household_id=$2 and c.state in ('stored','processing','failed') order by e.page_number`,
       [job.resource_id, job.household_id],
     );
     const row = rows[0];
     if (!row) throw Error("RESOURCE_UNAVAILABLE");
+    assertOriginalManifest(
+      rows.map((r) => ({
+        sha256: r.sha256,
+        size: r.byte_size,
+        page: r.page_number,
+      })),
+      row.content_hash,
+    );
+    if (!["good", "questionable"].includes(row.quality?.grade))
+      throw Error("QUALITY_REVIEW_REQUIRED");
     const actor = {
       userId: row.initiated_by_user_id,
       householdId: job.household_id,
@@ -307,9 +359,29 @@ export async function runOneJob(db: PGlite, extract = extractOriginal) {
     const drafts = [];
     for (const page of rows) {
       await assertActor(db, actor, true); // Revocation stops subsequent page processing.
+      const original = await store.read(
+        db,
+        actor,
+        {
+          id: page.id,
+          householdId: job.household_id,
+          captureId: job.resource_id,
+          storageKey: page.storage_key,
+          mime: page.mime_type,
+          size: page.byte_size,
+          sha256: page.sha256,
+          page: page.page_number,
+        },
+        true,
+      );
+      if (
+        original.length !== page.byte_size ||
+        createHash("sha256").update(original).digest("hex") !== page.sha256
+      )
+        throw Error("EVIDENCE_INTEGRITY");
       const d = draftSchema.parse(
         await extract(
-          page.original,
+          original,
           page.id,
           row.quality.grade === "good" ? "good" : "questionable",
           new Date().toISOString().slice(0, 10),
@@ -350,9 +422,34 @@ export async function runOneJob(db: PGlite, extract = extractOriginal) {
       throw Error("UNBOUND_EVIDENCE");
     await assertActor(db, actor, true); // Revalidation after extraction; revocation wins.
     await db.transaction(async (tx) => {
+      await store.verify?.(tx, actor, true);
+      const current = await tx.query<{
+        id: string;
+        sha256: string;
+        size: number;
+        page: number;
+        hash: string;
+        quality: Quality;
+      }>(
+        "select e.id,e.sha256,e.byte_size as size,e.page_number as page,c.content_hash as hash,c.quality from public.captures c join public.evidence_objects e on e.capture_id=c.id and e.household_id=c.household_id where c.id=$1 and c.household_id=$2 order by e.page_number for share of c,e",
+        [job.resource_id, job.household_id],
+      );
+      if (
+        !current.rows[0] ||
+        current.rows.length !== rows.length ||
+        current.rows.some(
+          (r, i) =>
+            r.id !== rows[i].id ||
+            r.sha256 !== rows[i].sha256 ||
+            r.size !== rows[i].byte_size,
+        ) ||
+        !["good", "questionable"].includes(current.rows[0].quality?.grade)
+      )
+        throw Error("EVIDENCE_INTEGRITY");
+      assertOriginalManifest(current.rows, current.rows[0].hash);
       const active = (
         await tx.query(
-          `select id from jobs where id=$1 and state='processing' and attempts=$2 for update`,
+          `select id from jobs where id=$1 and state='processing' and attempts=$2 and leased_until>clock_timestamp() for update`,
           [job.id, job.attempts + 1],
         )
       ).rows;
@@ -365,17 +462,18 @@ export async function runOneJob(db: PGlite, extract = extractOriginal) {
       ).rows;
       if (!membership.length) throw Error("ACCESS_DENIED");
       await tx.query(
-        `insert into private.review_drafts values($1,$2) on conflict(capture_id) do nothing`,
-        [job.resource_id, JSON.stringify(draft)],
+        `insert into private.review_drafts(capture_id,household_id,draft) values($1,$2,$3) on conflict(capture_id) do nothing`,
+        [job.resource_id, job.household_id, JSON.stringify(draft)],
       );
       await tx.query(
         `update captures set state='review_ready' where id=$1 and household_id=$2 and state<>'confirmed'`,
         [job.resource_id, job.household_id],
       );
-      await tx.query(
-        `update jobs set state='complete',leased_until=null where id=$1`,
-        [job.id],
+      const completed = await tx.query(
+        "update jobs set state='complete',leased_until=null,error_code=null where id=$1 and attempts=$2 and state='processing' and leased_until>clock_timestamp() returning id",
+        [job.id, job.attempts + 1],
       );
+      if (!completed.rows.length) throw Error("STALE_WORKER_LEASE");
     });
   } catch (error) {
     const code =
@@ -390,33 +488,35 @@ export async function runOneJob(db: PGlite, extract = extractOriginal) {
       ].includes(error.message)
         ? error.message
         : "EXTRACTION_RETRY_REQUIRED";
-    const failed = await db.query(
-      `update jobs set state=case when attempts>=3 or $3 then 'dead_letter' else 'pending' end,error_code=$4,available_at=now()+interval '10 seconds',leased_until=null where id=$1 and state='processing' and attempts=$2 returning id`,
-      [job.id, job.attempts + 1, code !== "EXTRACTION_RETRY_REQUIRED", code],
-    );
-    if (failed.rows.length)
-      await db.query(
-        `update captures set state='failed' where id=$1 and household_id=$2 and state<>'confirmed'`,
-        [job.resource_id, job.household_id],
+    await db.transaction(async (tx) => {
+      const failed = await tx.query(
+        `update jobs set state=case when attempts>=3 or $3 then 'dead_letter' else 'pending' end,error_code=$4,available_at=now()+interval '10 seconds',leased_until=null where id=$1 and state='processing' and attempts=$2 returning id`,
+        [job.id, job.attempts + 1, code !== "EXTRACTION_RETRY_REQUIRED", code],
       );
+      if (failed.rows.length)
+        await tx.query(
+          `update captures set state='failed' where id=$1 and household_id=$2 and state<>'confirmed'`,
+          [job.resource_id, job.household_id],
+        );
+    });
   }
   return true;
 }
-export async function getDraft(db: PGlite, actor: Actor, id: string) {
+export async function getDraft(db: SqlDatabase, actor: Actor, id: string) {
   await assertActor(db, actor);
   const { rows } = await db.query<{
     state: string;
     draft: Draft | null;
     errorCode: string | null;
   }>(
-    `select c.state,d.draft,j.error_code as "errorCode" from captures c left join private.review_drafts d on d.capture_id=c.id left join jobs j on j.resource_id=c.id and j.type='extract' where c.id=$1 and c.household_id=$2`,
+    `select c.state,d.draft,j.error_code as "errorCode" from captures c left join private.review_drafts d on d.capture_id=c.id and d.household_id=c.household_id left join jobs j on j.resource_id=c.id and j.household_id=c.household_id and j.type='extract' where c.id=$1 and c.household_id=$2`,
     [id, actor.householdId],
   );
   if (!rows[0]) throw Error("NOT_FOUND");
   return rows[0];
 }
 export async function confirmPurchase(
-  db: PGlite,
+  db: SqlDatabase,
   actor: Actor,
   captureId: string,
   values: Partial<Record<Field, string | null>>,
@@ -436,7 +536,7 @@ export async function confirmPurchase(
       draft: Draft;
       timezone: string;
     }>(
-      `select c.state,d.draft,h.timezone from captures c join private.review_drafts d on d.capture_id=c.id join households h on h.id=c.household_id where c.id=$1 and c.household_id=$2 for update of c`,
+      `select c.state,d.draft,h.timezone from captures c join private.review_drafts d on d.capture_id=c.id and d.household_id=c.household_id join households h on h.id=c.household_id where c.id=$1 and c.household_id=$2 for update of c`,
       [captureId, actor.householdId],
     );
     const row = rows[0];
@@ -574,7 +674,7 @@ export async function confirmPurchase(
   });
 }
 export async function correctPurchase(
-  db: PGlite,
+  db: SqlDatabase,
   actor: Actor,
   purchaseId: string,
   input: Correction,
@@ -754,7 +854,7 @@ export async function correctPurchase(
   };
 }
 export async function changeAttention(
-  db: PGlite,
+  db: SqlDatabase,
   actor: Actor,
   purchaseId: string,
   command: AttentionCommand,

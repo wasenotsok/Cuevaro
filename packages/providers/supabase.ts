@@ -67,6 +67,7 @@ export function managedBackend(
     await membership(actor, write);
   }
   return {
+    verifyActor: revalidate,
     async actor(
       token: string,
       householdId: string,

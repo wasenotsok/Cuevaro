@@ -26,6 +26,7 @@ it("managed composition is named-project-only, creates no network calls, and lea
     "actor",
     "evidenceUrl",
     "storeOriginal",
+    "verifyActor",
   ]);
   expect(JSON.stringify(runtime)).not.toContain(serviceKey);
 });

@@ -1,4 +1,4 @@
-import type { PGlite } from "@electric-sql/pglite";
+import type { SqlDatabase, SqlQuery } from "../../packages/providers/database";
 import type { Actor } from "../../packages/domain/authority";
 import type {
   ConfirmedFact,
@@ -10,7 +10,7 @@ import type { ItemFact } from "../../packages/domain/corrections";
 import { assertActor } from "./development";
 const observationSql = `json_build_object('field',o.field_name,'value',o.value,'confidence',o.confidence,'evidenceId',o.evidence_id,'excerpt',o.source_locator->>'excerpt','source',o.source_locator->>'source','version',o.source_locator->>'version','reason',coalesce(o.source_locator->>'reason','requires_review'))::jsonb || case when o.source_locator ? 'pages' and o.source_locator->'pages'<>'null'::jsonb then jsonb_build_object('pages',o.source_locator->'pages') else '{}'::jsonb end || case when o.source_locator ? 'sources' and o.source_locator->'sources'<>'null'::jsonb then jsonb_build_object('sources',o.source_locator->'sources') else '{}'::jsonb end`;
 export async function getRecords(
-  db: Pick<PGlite, "query">,
+  db: SqlQuery,
   actor: Actor,
   purchaseId?: string,
 ) {
