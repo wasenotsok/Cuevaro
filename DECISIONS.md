@@ -240,3 +240,9 @@ Keep ActionButton at module scope so fact confirmation does not remount a focuse
 **Date:** 2026-10-08
 
 Use existing Cuevaro Development wqwapaklrfpckhgjsejf in approved Singapore/Free. Parent coordinates the sole atomic migration executor; preserve ordered source hashes and prevent intermediate broad default ACL exposure. Restrict evidence storage SELECT to authenticated raw-download operation, denying direct client signing/list/metadata/S3 paths. Revalidate identity/membership before server60-second signing and validate stored capture/page identity. Bearer URLs already issued remain usable until expiry; never claim immediate recall. No new identity/credential or public host is inferred from management access.
+
+## D-032 - Process-only managed composition and reviewed synthetic fixture handoff
+**Status:** Locally verified; actual identity/credential and managed API gates open
+**Date:** 2026-10-08
+
+Compose the existing server-only Supabase adapter through a named-development-target loader, not an alternative service or automatic switch of the synthetic API. Reject publishable/privileged-key swaps locally in both runtime and read-only probe; syntax checks do not verify key authenticity. Owner masked entry supplies process-only inputs with finally cleanup, never assistant-generated passwords, files or persistent environment changes. Local fixture tooling accepts five distinct approved UUIDs, prepares new synthetic household SQL and exact original/hash manifest, and generates evidence SQL only after supplied bytes match. Parent must establish actual upload/readback provenance and review before execution; local matching alone is not live proof. No Auth configuration change, invitation, deploy, credential retrieval or managed write.

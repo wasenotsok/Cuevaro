@@ -1,3 +1,4 @@
+import { requireManagedPublishableKey } from "../packages/providers/managed-development";
 // Read-only real API probe. Provisioned approved identities/fixtures must already exist.
 // Credentials stay in the caller's process environment; never logged or persisted.
 import { requireExpectedDenial } from "./managed-probe-denial";
@@ -23,6 +24,7 @@ async function run() {
     process.exitCode = 2;
     return;
   }
+  requireManagedPublishableKey(key);
   const client = (authToken?: string) =>
     createClient(url, key!, {
       auth: { persistSession: false, autoRefreshToken: false },
@@ -129,6 +131,7 @@ async function run() {
 }
 run().catch((error) => {
   const known = new Set([
+    "MANAGED_CONFIGURATION_INVALID",
     "API_DENIAL_INCONCLUSIVE",
     "AUTH_IDENTITY_FAILED",
     "ORIGINAL_METADATA_FAILED",

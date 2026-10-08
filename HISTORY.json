@@ -413,6 +413,24 @@
         "Advisors retain reviewed bootstrap warning, intentional deny-all policy information and index information",
         "Managed backup/restore/native hardware/dependency release gate remain open"
       ]
+    },
+    {
+      "event_id": "cuevaro-process-only-managed-runtime-fixture-handoff",
+      "timestamp": "2026-10-08T02:53:22Z",
+      "date": "2026-10-08",
+      "actor": "Development",
+      "event_type": "implementation",
+      "title": "Prepared process-only managed composition, masked Owner launcher and local synthetic fixture/readback SQL tools",
+      "evidence": [
+        "docs/MANAGED_RUNTIME_HANDOFF.md",
+        "tests/managed-runtime.test.ts",
+        "tests/managed-fixture.test.ts"
+      ],
+      "limitations": [
+        "97 local tests pass; final commit requires own CI",
+        "No credentials retrieved, accounts created, network API acceptance or managed writes",
+        "Local byte matching is not actual Storage provenance; managed DB/job wiring and native/device gates remain open"
+      ]
     }
   ]
 }

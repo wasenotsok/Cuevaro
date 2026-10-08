@@ -52,3 +52,7 @@ After approved identity/access exists, parent/runtime must additionally:
 No paid upgrade, public/production deployment, merge, real personal capture or dependency-gate waiver is part of this checkpoint.
 
 The exact parent [managed evidence receipt](managed-database-evidence-2026-10-08.json) is preserved with its source/bundle/test hashes. Supplemental SQL is stored at [supabase/tests/cuevaro-managed-supplemental-role-checks.sql](../supabase/tests/cuevaro-managed-supplemental-role-checks.sql), matching SHA25612460b37f1a4ecd2301a70850acac670620e0f2d4c29fbb3f6e7555fabde0f6c after XML entity decoding. The receipt retains the original basename; this link records repository placement. No managed write was rerun to persist the receipt.
+
+## Process-only wiring and fixture preparation follow-up
+
+The exact Owner-operated masked input route, minimum existing key/token inputs, five-role UUID plan, local immutable PNG/manifest/SQL tooling and remaining real API boundary are documented in [MANAGED_RUNTIME_HANDOFF.md](MANAGED_RUNTIME_HANDOFF.md). The new composition instantiates the existing adapter without network calls/listener; it does not wire embedded PGlite transactions/jobs to managed PostgreSQL. No credential, identity or managed write occurred. Current97 tests/21 files cover the loader, key swap refusal, restart/copied actor refusal, revocation and synthetic setup rollback/graph preservation.
