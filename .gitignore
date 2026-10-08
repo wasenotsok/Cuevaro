@@ -13,3 +13,5 @@ playwright-report/
 !.env.example
 apps/mobile/android/
 apps/mobile/ios/
+
+supabase/.temp/
