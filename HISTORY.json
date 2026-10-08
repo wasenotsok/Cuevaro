@@ -467,6 +467,26 @@
         "Remaining CI browser/export steps still running at record time",
         "Managed Auth/Storage/native/dependency gates remain open"
       ]
+    },
+    {
+      "event_id": "cuevaro-managed-review-table-applied",
+      "timestamp": "2026-10-08T03:58:37Z",
+      "date": "2026-10-08",
+      "actor": "Development",
+      "event_type": "managed_validation",
+      "title": "Parent applied and validated private review table once; desktop preserved exact receipt/SQL",
+      "migration_version": "20261008035615",
+      "source_commit": "47785e1f20bfe3b9c97b1ef322736e68212ece3d",
+      "body_sha256": "380c244a80f4650556d1bd8532da702ad67acbdd52dd7888322a4479c14c584f",
+      "evidence": [
+        "docs/managed-review-drafts-evidence-2026-10-08.json",
+        "supabase/tests/cuevaro-managed-review-drafts-role-checks.sql"
+      ],
+      "limitations": [
+        "SQL claims/role checks are not genuine Auth/API acceptance",
+        "No Auth account creation, password/key handling, Storage byte operations, URL expiry, API startup or hosting in this application",
+        "Managed export/backup/restore and native acceptance remain unverified; dependency gate unchanged"
+      ]
     }
   ]
 }
