@@ -1,0 +1,41 @@
+{
+  "project_ref": "wqwapaklrfpckhgjsejf",
+  "base_head": "bf253855aac54641599c0f3e0afa821053d8c478",
+  "source_migrations": [
+    {
+      "path": "supabase/migrations/202610050001_foundation.sql",
+      "sha256": "32ee16aa24f90e7eb8d5ea53a89facb37490fdbb7a274eecee2491e8c8eb7883"
+    },
+    {
+      "path": "supabase/migrations/202610050002_private_storage.sql",
+      "sha256": "56f6a29aaec467bd5fe9e8f3d6efc4504cd36163a3e6a343823a86d4364c1826"
+    },
+    {
+      "path": "supabase/migrations/202610060003_client_privileges.sql",
+      "sha256": "e4df9d52b4192db039f0e7971c4878a014f982976a2055c6ca0cd5b31ed2bdd0"
+    },
+    {
+      "path": "supabase/migrations/202610060004_evidence_pages.sql",
+      "sha256": "6aa7a528c8cf5df4514e9381d74f04c7f9b0503eefcf1cc593aa46bbcb2c4bd3"
+    },
+    {
+      "path": "supabase/migrations/202610060005_item_facts.sql",
+      "sha256": "83b4f086ccea1f5eeb0fe7f6eee01d3ae92faecc8063ffde8efa990c8b44dc48"
+    },
+    {
+      "path": "supabase/migrations/202610060006_correction_receipts.sql",
+      "sha256": "8b8e916713f2a48f96d4884f9272c2b658a8d737eb726008b918303fc48fb282"
+    },
+    {
+      "path": "supabase/migrations/20261008020853_storage_download_only.sql",
+      "sha256": "85d031db2feca82160801bf771e406d99e832f7cae2d102792295fdc8082f402"
+    }
+  ],
+  "bundle": {
+    "path": "supabase/reviewed/phase1-development-baseline.sql",
+    "sha256": "fc98ebf1afa8283f7e1400898db144a1b24acca63aa12331fccbf61b9cc85b13"
+  },
+  "execution": "One parent-controlled atomic apply_migration; do not then reapply individual source files.",
+  "status": "reviewed locally; not applied",
+  "hash_normalization": "UTF-8 without BOM, CRLF normalized to LF"
+}
