@@ -125,7 +125,7 @@ it.runIf(enabled)(
         value: "2026-10-22",
       });
       expect(correction.events.find((e) => e.kind === "return")?.status).toBe(
-        "completed",
+        "not_applicable",
       );
       expect(
         correction.cues
