@@ -1,5 +1,6 @@
 // Read-only real API probe. Provisioned approved identities/fixtures must already exist.
 // Credentials stay in the caller's process environment; never logged or persisted.
+import { requireExpectedDenial } from "./managed-probe-denial";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { createHash } from "node:crypto";
@@ -35,8 +36,10 @@ async function run() {
     throw Error("AUTH_IDENTITY_FAILED");
   const invalid = await client().auth.getUser("synthetic-invalid-token");
   if (!invalid.error) throw Error("INVALID_TOKEN_ACCEPTED");
+  requireExpectedDenial(invalid.error, "auth");
   const anonymous = await client().from("households").select("id").limit(1);
   if (!anonymous.error) throw Error("ANONYMOUS_TABLE_ACCESS");
+  requireExpectedDenial(anonymous.error, "database");
   const own = await user
     .from("households")
     .select("id")
@@ -74,11 +77,15 @@ async function run() {
     .from("evidence")
     .createSignedUrl(path, 86400);
   if (!signing.error) throw Error("DIRECT_CLIENT_SIGNING_ALLOWED");
+  requireExpectedDenial(signing.error, "storage");
   const batch = await user.storage
     .from("evidence")
     .createSignedUrls([path], 86400);
   if (!batch.error && batch.data?.some((x) => x.signedUrl))
     throw Error("DIRECT_BATCH_SIGNING_ALLOWED");
+  // A successful empty/per-object error response has no verified denial status.
+  // Keep it inconclusive rather than guessing from a provider message.
+  requireExpectedDenial(batch.error, "storage");
   let foreign = "blocked: second approved identity unavailable";
   if (otherToken) {
     const other = client(otherToken);
@@ -97,6 +104,7 @@ async function run() {
       throw Error("CROSS_HOUSEHOLD_READ_FAILED");
     const file = await other.storage.from("evidence").download(path);
     if (!file.error) throw Error("CROSS_HOUSEHOLD_ORIGINAL_ACCESS");
+    requireExpectedDenial(file.error, "storage");
     foreign = "passed";
   }
   console.log(
@@ -118,6 +126,7 @@ async function run() {
 }
 run().catch((error) => {
   const known = new Set([
+    "API_DENIAL_INCONCLUSIVE",
     "AUTH_IDENTITY_FAILED",
     "ORIGINAL_METADATA_FAILED",
     "ORIGINAL_INTEGRITY_FAILED",
@@ -134,7 +143,10 @@ run().catch((error) => {
   ]);
   console.error(
     JSON.stringify({
-      status: "failed",
+      status:
+        error instanceof Error && error.message === "API_DENIAL_INCONCLUSIVE"
+          ? "inconclusive"
+          : "failed",
       code:
         error instanceof Error && known.has(error.message)
           ? error.message
