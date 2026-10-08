@@ -13,7 +13,7 @@ Checkpoint: 2026-10-08. Target is existing Cuevaro Development `wqwapaklrfpckhgj
 
 The syntax/legacy-role checks reject key swaps, unrelated roles, whitespace/header injection, oversized or missing values. They do not cryptographically authenticate credentials. Actual provider requests still verify identity and re-read membership. Copied actors and actors retained from another runtime instance are rejected. No fallback to generic SUPABASE_* variables exists; no project URL override is accepted. No secret-bearing configuration object or key is exposed by the returned interface. Do not log returned bearer evidence URLs.
 
-The composition supports existing identity/membership, immutable original upload and revalidated60-second signing adapter methods. It does **not** replace the synthetic development API, wire its PGlite transactions/jobs to managed PostgreSQL, host a service, or finish the native managed vertical slice. Actual private Node API/worker persistence/hosting integration remains open. Neither service keys nor publishable keys were retrieved during this work.
+The composition supports existing identity/membership, immutable original upload and revalidated60-second signing adapter methods. The existing application commands now run through a shared SQL transaction interface, node-pg adapter and managed original store. Loopback API/separate worker entry points are prepared. No service has been hosted or started against managed resources, and the native managed vertical slice remains open. Neither service keys nor publishable keys were retrieved during this work.
 
 ## Owner-operated secure input route
 
@@ -39,7 +39,7 @@ Process/user/machine presence-only checks found all five probe inputs, the new s
 
 ## Synthetic identities and local fixture tools
 
-Two approved existing identities suffice for the read-only owner/foreign probe. Full role acceptance uses five distinct actual Auth UUIDs: owner, member, viewer, revoked member, and foreign non-member (owner in separate household). These are database memberships, never user_metadata authority. Auth users currently number zero. Creating these accounts requires the explicit bounded credential/access handoff pending with the Owner; general synthetic-data approval already covers ordinary local fixtures and tests. Do not surprise the Owner with signup emails, invitations, recovery mail or confirmation bypasses; account password entry must be Owner-operated. No Auth configuration changes are included.
+Two approved existing identities suffice for the read-only owner/foreign probe. Full role acceptance uses five distinct actual Auth UUIDs: owner, member, viewer, revoked member, and foreign non-member (owner in separate household). These are database memberships, never user_metadata authority. Auth users currently number zero. Creating exactly these five accounts is now Owner-approved; password entry/submission remains exclusively Owner-operated and the verification route must obey the no-bypass/no-email boundary; general synthetic-data approval already covers ordinary local fixtures and tests. Do not surprise the Owner with signup emails, invitations, recovery mail or confirmation bypasses; account password entry must be Owner-operated. No Auth configuration changes are included.
 
 After approved accounts exist, make an ignored local JSON file containing only the five role-to-UUID entries, with keys `owner`, `member`, `viewer`, `revoked`, `foreign`. It must contain no emails/passwords/tokens or extra fields.
 
@@ -58,3 +58,17 @@ node --import tsx scripts/prepare-managed-evidence.ts .local/managed-fixtures/PL
 This checks bounded byte count/SHA and canonical tenant/capture path, producing an exclusive 02-evidence-after-readback.sql for parent review. It creates no managed rows. Local byte matching alone cannot prove remote upload: parent must establish the API readback provenance before execution. The SQL inserts one stored capture, immutable evidence metadata/page1 and audit event in one transaction, without overwrite/upsert. Quality remains explicitly not_evaluated; no extraction/facts/deadlines are invented. It is an API security fixture, not evidence that the real Capture Quality Gate ran.
 
 Populate probe household/path from this same manifest, and use actual owner/foreign sessions through the masked launcher. Full live upload failure/retry, viewer/revocation,60-second URL expiry, managed export/restore and actual mobile/private API acceptance remain required. Synthetic transport and PGlite tests do not close these gates. Keep dependency gate enforced; no merge or public deployment is authorized.
+
+## Private managed application startup (prepared; not executed)
+
+After parent applies the separately reviewed forward review-draft migration and the Owner securely supplies existing project inputs locally:
+
+```powershell
+.\scripts\run-managed-verification.ps1 -Mode ManagedApi
+# In a separate Owner-operated terminal:
+.\scripts\run-managed-verification.ps1 -Mode ManagedWorker
+```
+
+Required process inputs: CUEVARO_SUPABASE_PUBLISHABLE_KEY, CUEVARO_SUPABASE_SERVICE_ROLE_KEY, CUEVARO_POSTGRES_HOST, CUEVARO_POSTGRES_USER, CUEVARO_POSTGRES_PASSWORD. Optional CUEVARO_POSTGRES_CA supplies a trusted CA without disabling TLS verification. Only the approved project direct host or Singapore session pooler is accepted; pooler user must include the exact project suffix. Port5432, databasepostgres, four connections, bounded query/connection/HTTP deadlines. No DATABASE_URL fallback or environment-file load. API binds127.0.0.1:4329; this is not reachable by an ordinary mobile device and is not hosting acceptance. Requests use actual Bearer Auth and X-Household-Id, with the existing development-only synthetic mutation marker. Worker drains in-flight work on cancellation. Readiness checks the private table/RLS prerequisite only.
+
+Windows Chrome was opened to https://supabase.com/dashboard/project/wqwapaklrfpckhgjsejf/auth/users for Owner-operated input. No existing login session was inspected. Add user -> Create new user uses Email address/User Password fields and sends no confirmation email. **Auto confirm user? defaults checked** (official Studio source); leave it unchecked under the current no-verification-bypass instruction. If project email confirmation is required, unconfirmed accounts cannot establish usable login sessions without resolving that specific boundary. Do not use Invite user, alter project settings or enter passwords through assistant tools. Parent can coordinate nonsensitive UUID memberships after actual accounts exist; UUID presence is not authenticated API evidence.

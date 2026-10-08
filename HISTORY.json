@@ -431,6 +431,26 @@
         "No credentials retrieved, accounts created, network API acceptance or managed writes",
         "Local byte matching is not actual Storage provenance; managed DB/job wiring and native/device gates remain open"
       ]
+    },
+    {
+      "event_id": "cuevaro-managed-application-wiring",
+      "timestamp": "2026-10-08T03:39:29Z",
+      "date": "2026-10-08",
+      "actor": "Development",
+      "event_type": "implementation",
+      "title": "Reused existing application commands with bounded PostgreSQL and immutable managed originals",
+      "evidence": [
+        "tests/managed-application.test.ts",
+        "tests/postgres-adapter.test.ts",
+        "tests/postgres-service.test.ts",
+        "docs/MANAGED_RUNTIME_HANDOFF.md"
+      ],
+      "limitations": [
+        "114 local tests pass; real PG17 test requires exact CI",
+        "Forward private review-draft migration unapplied; no managed writes/live startup",
+        "Auth identities approved; Owner-only credentials and no-bypass verification boundary remain",
+        "Phase1/native/dependency release gates open"
+      ]
     }
   ]
 }

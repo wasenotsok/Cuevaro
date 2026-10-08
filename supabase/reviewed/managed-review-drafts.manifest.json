@@ -1,0 +1,16 @@
+{
+  "target_project": "wqwapaklrfpckhgjsejf",
+  "status": "reviewed locally; unapplied",
+  "source_commit": "1666c7d",
+  "source_file": "supabase/migrations/20261008030442_managed_review_drafts.sql",
+  "source_sha256": "ba5dd45e8c239d81df6c1a2e2486716ce3e7feb1ba9f65a1f73d2733fb0ab200",
+  "body_file": "supabase/reviewed/managed-review-drafts.sql",
+  "body_sha256": "30fe4d734c86d875cbccbdd20d476abcfdf327bda3e6d535eb5ef56153ed846c",
+  "apply_in_one_transaction": true,
+  "depends_on_managed_migration": "20261008022037",
+  "notes": [
+    "Adds only private review_drafts; no Auth users, existing data mutation or client privileges",
+    "Do not reapply the earlier atomic baseline or map this to its historical version",
+    "Parent is sole managed write executor; verify household FK/RLS/client denial after application"
+  ]
+}

@@ -287,3 +287,14 @@ Business requirements and pricing are separate from the consumer plan.
 Private single-record developer export and disposable PGlite dump/load recovery now contribute local evidence without closing Phase 1. Native export UX, managed backup/restore and household-wide export remain open.
 
 2026-10-06: on-device single-record archive UX and broader generated OCR evaluation are locally verified independent contributions. Native file-provider/SQLCipher/hardware, managed service integration, representative calibration and durable push remain separate gates; no later phase is closed.
+
+
+## Managed application wiring checkpoint - 2026-10-08
+
+Existing capture/review/correction/Stop/retrieval commands now share a bounded PostgreSQL transaction interface and genuine Supabase SDK adapters. Original uploads are immutable, download/hash-checked before acknowledgement and use stable identifiers across rollback/lost acknowledgements. Worker publication revalidates actual Auth identity, household membership, the complete ordered page manifest and its unexpired claim after OCR. Unknown quality and missing/corrupt pages fail closed. This is local integration evidence with injected synthetic HTTP transport and real local OCR, not live managed API acceptance.
+
+The separate forward migration `20261008030442_managed_review_drafts.sql` adds a household-bound private review table with RLS and no client grants. It is **unapplied**; parent remains sole managed-write coordinator. Original reviewed baseline/history mapping is unchanged. Explicit managed API/worker entry points are loopback-only, process-configured, synthetic-mutation-only and refuse a missing schema prerequisite. They were not started against the managed project. Owner-operated masked launcher modes are prepared; configuration never makes health an acceptance claim.
+
+Local verification: **114 tests passed, one real PostgreSQL17 CI-only test explicitly skipped**, strict typecheck/source scan/formatting passed. Disposable PostgreSQL17 CI now exercises checked-out node-pg connections, rollback, SKIP LOCKED, concurrent claim ownership and retained Stop/correction history; its result requires exact-head CI. Independent review repaired post-OCR Auth revocation and partial-page omission, with negative regressions. Five synthetic Auth identities are Owner-approved; their passwords must be entered/submitted by Owner. The official Users form defaults Auto confirm on, which remains outside the instruction forbidding verification bypass; no accounts, passwords or project Auth settings were changed here.
+
+Actual Auth login, Storage upload/readback/expiry, native mobile private connectivity, managed restore, hosting/durable notifications and dependency release gates remain open. Automatic approval review rejected live API/worker startup before credential handoff; no startup occurred. No phase, release, merge or deployment is claimed.
