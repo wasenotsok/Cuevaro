@@ -1,0 +1,140 @@
+{
+  "project_ref": "wqwapaklrfpckhgjsejf",
+  "project_name": "Cuevaro Development",
+  "region": "ap-southeast-1",
+  "date_utc": "2026-10-08",
+  "recorded_at": "2026-10-08T03:58:37Z",
+  "provenance": "Parent sole executor supplied application/catalog/rollback/advisor evidence; desktop recorded artifacts without managed writes",
+  "source_commit": "47785e1f20bfe3b9c97b1ef322736e68212ece3d",
+  "migration": {
+    "version": "20261008035615",
+    "name": "cuevaro_managed_review_drafts",
+    "apply_calls": 1,
+    "body_file": "supabase/reviewed/managed-review-drafts.sql",
+    "body_sha256": "380c244a80f4650556d1bd8532da702ad67acbdd52dd7888322a4479c14c584f",
+    "source_file": "supabase/migrations/20261008030442_managed_review_drafts.sql",
+    "source_sha256": "3a8438f4406780f4ad5baec922bb28fa1ff6c6af9125550bad30a0aca65e34d5",
+    "depends_on_managed_migration": "20261008022037",
+    "baseline_reapplied": false,
+    "body_equals_source_without_begin_commit": true
+  },
+  "verification": {
+    "pre_apply": {
+      "review_drafts_absent": true,
+      "households": 0,
+      "captures": 0,
+      "auth_users": 0,
+      "storage_objects": 0
+    },
+    "table": {
+      "schema": "private",
+      "name": "review_drafts",
+      "owner": "postgres",
+      "rls": true,
+      "acl": "{postgres=arwdDxtm/postgres}",
+      "client_policies": 0,
+      "primary_key": [
+        "capture_id"
+      ],
+      "foreign_key": {
+        "columns": [
+          "capture_id",
+          "household_id"
+        ],
+        "references": "public.captures(id,household_id)"
+      },
+      "not_null": [
+        "capture_id",
+        "household_id",
+        "draft"
+      ],
+      "check": "jsonb_typeof(draft) = 'object'"
+    },
+    "rollback_test": {
+      "attempts": 1,
+      "result": "passed",
+      "coverage": [
+        "RLS enabled",
+        "no client policies",
+        "anon/authenticated denied SELECT/INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/TRIGGER/MAINTAIN privileges",
+        "valid synthetic draft roundtrip",
+        "duplicate capture primary-key denial",
+        "cross-household composite FK denial",
+        "nonexistent capture FK denial",
+        "null household denial",
+        "SQL null draft denial",
+        "JSON null/array/scalar draft denial",
+        "actual role-level SELECT/INSERT/UPDATE/DELETE/TRUNCATE failures"
+      ],
+      "no_auth_users_or_storage_objects_mutation": true,
+      "script_file": "supabase/tests/cuevaro-managed-review-drafts-role-checks.sql",
+      "script_sha256": "595e9e7ccec61352f598a9310f9408fdac53580d01de227f5cf5d95a7f0d3d26"
+    },
+    "final_counts": {
+      "review_drafts": 0,
+      "households": 0,
+      "memberships": 0,
+      "captures": 0,
+      "auth_users": 0,
+      "storage_objects": 0
+    },
+    "migration_history": [
+      {
+        "version": "20261008022037",
+        "name": "cuevaro_phase1_development_baseline"
+      },
+      {
+        "version": "20261008035615",
+        "name": "cuevaro_managed_review_drafts"
+      }
+    ],
+    "advisors": {
+      "security": [
+        {
+          "name": "rls_enabled_no_policy",
+          "level": "INFO",
+          "count": 2,
+          "tables": [
+            "private.purchase_commands",
+            "private.review_drafts"
+          ],
+          "observed_at": "2026-10-08T03:57:20.638Z"
+        },
+        {
+          "name": "authenticated_security_definer_function_executable",
+          "level": "WARN",
+          "count": 1,
+          "function": "public.create_household(p_name text,p_region text,p_timezone text)",
+          "observed_at": "2026-10-08T03:57:20.638Z"
+        }
+      ],
+      "performance": [
+        {
+          "name": "unindexed_foreign_keys",
+          "level": "INFO",
+          "count": 16,
+          "added_finding": "private.review_drafts.review_drafts_capture_id_household_id_fkey",
+          "observed_at": "2026-10-08T03:57:24.429Z"
+        },
+        {
+          "name": "unused_index",
+          "level": "INFO",
+          "count": 4,
+          "indexes": [
+            "jobs_ready",
+            "captures_tenant",
+            "items_tenant",
+            "fact_item_history"
+          ],
+          "observed_at": "2026-10-08T03:57:24.429Z"
+        }
+      ]
+    },
+    "advisor_assessment": "Security WARN remains for intentional bounded bootstrap; two INFO private no-policy tables intentionally deny clients. Performance16 unindexedFK/4 unused indexes retained; no extra grants/policies/indexes changed.",
+    "limitations": [
+      "SQL claims/role checks are not genuine Auth/API acceptance",
+      "No Auth account creation, password/key handling, Storage byte operations, URL expiry, API startup or hosting in this application",
+      "Managed export/backup/restore and native acceptance remain unverified; dependency gate unchanged"
+    ]
+  }
+}

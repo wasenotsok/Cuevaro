@@ -1,0 +1,52 @@
+{
+  "name": "cuevaro",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "services/api"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm test && npm run scan",
+    "scan": "node scripts/check-source.mjs",
+    "dev:api": "tsx services/api/server.ts",
+    "mobile": "npm run start -w @cuevaro/mobile",
+    "build:mobile": "npm run export -w @cuevaro/mobile",
+    "test:e2e": "playwright test",
+    "format:check": "prettier --check apps/mobile packages services tests scripts *.ts"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.3.0",
+    "@supabase/supabase-js": "2.117.2",
+    "@tesseract.js-data/eng": "^1.0.0",
+    "fastify": "^5.0.0",
+    "fflate": "0.8.3",
+    "jpeg-js": "^0.4.4",
+    "pg": "8.23.1",
+    "sharp": "^0.35.5",
+    "tesseract.js": "^7.0.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^24.0.0",
+    "@types/pg": "8.23.1",
+    "@types/react": "^19.0.0",
+    "prettier": "^3.9.9",
+    "react-native": "0.86.3",
+    "tsx": "^4.0.0",
+    "typescript": "^5.9.0",
+    "uuid": "11.1.1",
+    "vitest": "^5.0.3"
+  },
+  "overrides": {
+    "react-native": "0.86.3",
+    "react": "19.2.3",
+    "xcode": {
+      "uuid": "11.1.1"
+    }
+  },
+  "type": "module"
+}

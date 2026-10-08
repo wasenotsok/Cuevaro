@@ -1,0 +1,17 @@
+{
+  "target_project": "wqwapaklrfpckhgjsejf",
+  "status": "reviewed locally; unapplied",
+  "source_commit": "1666c7d",
+  "source_file": "supabase/migrations/20261008030442_managed_review_drafts.sql",
+  "source_sha256": "3a8438f4406780f4ad5baec922bb28fa1ff6c6af9125550bad30a0aca65e34d5",
+  "body_file": "supabase/reviewed/managed-review-drafts.sql",
+  "body_sha256": "380c244a80f4650556d1bd8532da702ad67acbdd52dd7888322a4479c14c584f",
+  "apply_in_one_transaction": true,
+  "depends_on_managed_migration": "20261008022037",
+  "notes": [
+    "Adds only private review_drafts; no Auth users, existing data mutation or client privileges",
+    "Do not reapply the earlier atomic baseline or map this to its historical version",
+    "Parent is sole managed write executor; verify household FK/RLS/client denial after application"
+  ],
+  "hash_encoding": "SHA256 of canonical committed Git blob (UTF-8/LF); normalize local CRLF before comparison"
+}

@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "Cuevaro",
+    "slug": "cuevaro",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "com.cuevaro.development",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.cuevaro.development",
+      "allowBackup": false,
+      "blockedPermissions": ["android.permission.RECORD_AUDIO"]
+    },
+    "plugins": [
+      [
+        "expo-sqlite",
+        {
+          "useSQLCipher": true
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose purchase evidence to preserve in Cuevaro.",
+          "cameraPermission": "Photograph your receipt or purchase evidence.",
+          "microphonePermission": false
+        }
+      ]
+    ],
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}

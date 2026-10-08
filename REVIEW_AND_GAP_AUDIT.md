@@ -167,3 +167,42 @@ The strongest remaining uncertainty is commercial, not conceptual:
 **Will users value Cuevaro's capture-to-lifecycle convenience enough to keep using and pay for it?**
 
 That must be answered by a focused alpha/beta, not more speculative documentation.
+
+## 8. First implementation review — 2026-10-05
+
+The local foundation and synthetic capture-to-lifecycle development slice now exist. Review and fixes include the local/server evidence-ID mismatch, lost confirmation-response recovery, immutable observation provenance, worker lease/revocation revalidation, managed-actor forgery refusal and platform-specific encrypted-storage bundling. See [validation evidence](docs/VALIDATION.md).
+
+This review does not close any release gate. In particular, the quality detector is provisional, labeled single-item OCR extraction is limited, mobile cloud sync/push is unconnected, real hardware and managed authorization/storage have not been exercised, and the dependency gate remains blocked. Future V1 work must follow the current phase gates and cannot interpret passing synthetic tests as commercial readiness.
+
+## 9. Independent synthetic implementation review - 2026-10-06
+
+Further bounded development added document-region quality advice with unresolved completeness, actual embedded-text PDF parsing/page provenance/original retrieval, explicit alternate receipt labels/date formats and conservative conflicting evidence. Independent review repaired camouflaged-edge false Good and valid amounts masking unsupported competing labels. PDF hidden text remains explicitly unverified visible evidence; rendering/scanned OCR/native viewing remain incomplete. These findings and regressions are in docs/INDEPENDENT_REVIEW.md and docs/VALIDATION.md.
+
+Independent V1 implementation remains possible without service setup: multi-item review, correction/rescheduling history, accessibility and development export/restore. These are ordinary engineering work; real managed-provider/native/production delivery acceptance still needs its specific external capability. Phase 1 remains in progress and the dependency gate is enforced.
+
+## 10. Multi-page capture and evaluation review - 2026-10-06
+
+Ordered photo assembly now preserves separate originals, earlier replacements and per-page provenance; atomic failures and lost acknowledgements/restart are verified. Independent review repaired original-hash deduplication, between-page revocation and sealed-page rebinding. Actual per-page OCR creates one explicitly reviewed lifecycle; conflicting dates/amounts remain Unknown. Reconstructed legacy migration preserves original bytes/hash/ID and tenant reads. Native SQLCipher/hardware and live managed migration remain gaps.
+
+The versioned eleven-case generated quality-to-extraction evaluation reports skips, actual candidates/Unknowns and mismatches rather than implying broad accuracy. Glare still yielded a wrong low-confidence merchant. Zero high-confidence mismatches measures an enforced confidence cap, not calibrated false-confidence performance. Representative input collection and acceptance thresholds remain open; these synthetic results cannot close any phase gate.
+
+Limited multi-item review now handles explicit labels with mandatory individual track/skip and correction provenance. Repeated labels may be duplicate evidence; no quantity, price or item-specific coverage is inferred. Independent review repaired cross-purchase history links. Unlabeled line extraction and representative multi-item calibration remain open; correction/rescheduling history follows as independent safe work.
+
+Correction/history now preserves original observations, scoped assertion chains, queued offline edits and idempotent replay. Independent review repaired Unknown-roundtrip reminder-intent loss. Native/managed integration and representative acceptance remain open; local export/restore and accessibility are further independent safe contributions.
+
+Device archive UX now works locally and in the browser harness with exact originals and correction history; native adapter lifecycle is mocked and physical validation remains open. Broader sixteen-case generated OCR regression is not representative calibration. Native SQLCipher/camera/sharing, managed auth/storage, durable push, legal retention/deletion acceptance and release dependency remediation remain distinct gaps.
+
+2026-10-07 local repair: actual Tab/Enter review exposed and repaired quick-reply focus loss; invalid calendar correction now announces an associated error before queueing. Light/dark enlarged-text journeys pass, and key semantic benchmark cases must execute through review. Android prebuild is prepared after SDK-matched system UI repair, but Java 8 certificate failure/missing SDK/device and separate iOS/macOS capability block native acceptance. Current status now distinguishes completed local work from remaining managed/native/representative gates; no phase closure or release claim.
+
+2026-10-08: verified named managed project/read access, prepared ordered atomic migration handoff and repaired direct client signing via operation-limited forward policy. Local SDK/SQL checks remain distinct from actual Auth/Storage/expiry/restore acceptance: zero approved Auth identities/runtime configuration currently block those. Parent is sole migration executor. No secret/account/public hosting or phase closure inferred.
+
+
+## Managed application wiring checkpoint - 2026-10-08
+
+Existing capture/review/correction/Stop/retrieval commands now share a bounded PostgreSQL transaction interface and genuine Supabase SDK adapters. Original uploads are immutable, download/hash-checked before acknowledgement and use stable identifiers across rollback/lost acknowledgements. Worker publication revalidates actual Auth identity, household membership, the complete ordered page manifest and its unexpired claim after OCR. Unknown quality and missing/corrupt pages fail closed. This is local integration evidence with injected synthetic HTTP transport and real local OCR, not live managed API acceptance.
+
+The separate forward migration `20261008030442_managed_review_drafts.sql` adds a household-bound private review table with RLS and no client grants. It is **unapplied**; parent remains sole managed-write coordinator. Original reviewed baseline/history mapping is unchanged. Explicit managed API/worker entry points are loopback-only, process-configured, synthetic-mutation-only and refuse a missing schema prerequisite. They were not started against the managed project. Owner-operated masked launcher modes are prepared; configuration never makes health an acceptance claim.
+
+Local verification: **114 tests passed, one real PostgreSQL17 CI-only test explicitly skipped**, strict typecheck/source scan/formatting passed. Disposable PostgreSQL17 CI now exercises checked-out node-pg connections, rollback, SKIP LOCKED, concurrent claim ownership and retained Stop/correction history; its result requires exact-head CI. Independent review repaired post-OCR Auth revocation and partial-page omission, with negative regressions. Five synthetic Auth identities are Owner-approved; their passwords must be entered/submitted by Owner. The official Users form defaults Auto confirm on, which remains outside the instruction forbidding verification bypass; no accounts, passwords or project Auth settings were changed here.
+
+Actual Auth login, Storage upload/readback/expiry, native mobile private connectivity, managed restore, hosting/durable notifications and dependency release gates remain open. Automatic approval review rejected live API/worker startup before credential handoff; no startup occurred. No phase, release, merge or deployment is claimed.

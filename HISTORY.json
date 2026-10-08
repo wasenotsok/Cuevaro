@@ -3,7 +3,7 @@
   "items": [
     {
       "key": "phase-0",
-      "display_name": "Phase 0 — Product Definition and Commercial Blueprint",
+      "display_name": "Phase 0 â€” Product Definition and Commercial Blueprint",
       "type": "phase",
       "status": "completed",
       "completed_at": "2026-10-05T18:09:00+08:00",
@@ -13,16 +13,17 @@
     },
     {
       "key": "phase-1",
-      "display_name": "Phase 1 — Engineering Foundation",
+      "display_name": "Phase 1 â€” Engineering Foundation",
       "type": "phase",
-      "status": "planned",
+      "status": "in_progress",
       "dependencies": [
         "phase-0"
-      ]
+      ],
+      "started_at": "2026-10-05T15:03:33.3608387Z"
     },
     {
       "key": "phase-2",
-      "display_name": "Phase 2 — Capture and Quality Gate",
+      "display_name": "Phase 2 â€” Capture and Quality Gate",
       "type": "phase",
       "status": "planned",
       "dependencies": [
@@ -31,7 +32,7 @@
     },
     {
       "key": "phase-3",
-      "display_name": "Phase 3 — Intelligent Purchase Lifecycle",
+      "display_name": "Phase 3 â€” Intelligent Purchase Lifecycle",
       "type": "phase",
       "status": "planned",
       "dependencies": [
@@ -40,7 +41,7 @@
     },
     {
       "key": "phase-4",
-      "display_name": "Phase 4 — Watch, Remind, Act",
+      "display_name": "Phase 4 â€” Watch, Remind, Act",
       "type": "phase",
       "status": "planned",
       "dependencies": [
@@ -49,7 +50,7 @@
     },
     {
       "key": "phase-5",
-      "display_name": "Phase 5 — Trust, Desktop Companion, and Household Readiness",
+      "display_name": "Phase 5 â€” Trust, Desktop Companion, and Household Readiness",
       "type": "phase",
       "status": "planned",
       "dependencies": [
@@ -58,7 +59,7 @@
     },
     {
       "key": "phase-6",
-      "display_name": "Phase 6 — Closed Alpha",
+      "display_name": "Phase 6 â€” Closed Alpha",
       "type": "phase",
       "status": "planned",
       "dependencies": [
@@ -67,7 +68,7 @@
     },
     {
       "key": "phase-7",
-      "display_name": "Phase 7 — Commercial Beta / V1",
+      "display_name": "Phase 7 â€” Commercial Beta / V1",
       "type": "phase",
       "status": "planned",
       "dependencies": [
@@ -117,6 +118,375 @@
       "date": "2026-10-05",
       "title": "Commercial product blueprint and red-team review published",
       "actor": "Product study"
+    },
+    {
+      "event_id": "cuevaro-continuous-implementation",
+      "event_type": "decision",
+      "date": "2026-10-05",
+      "title": "Owner granted continuous bounded Cuevaro development authority",
+      "actor": "Owner"
+    },
+    {
+      "event_id": "cuevaro-local-slice",
+      "event_type": "implementation",
+      "date": "2026-10-05",
+      "timestamp": "2026-10-05T15:03:33.3708331Z",
+      "title": "Synthetic local foundation and receipt-to-lifecycle slice implemented; roadmap gates remain open",
+      "actor": "Development",
+      "evidence": [
+        "docs/VALIDATION.md",
+        "CURRENT_STATUS.md"
+      ],
+      "limitations": [
+        "No native hardware verification",
+        "No managed auth/storage/staging activation",
+        "No production AI or push delivery",
+        "Unpatched dependency release gate"
+      ]
+    },
+    {
+      "limitations": [
+        "Phase 1 remains open",
+        "No complete supported advisory remediation",
+        "No managed services activated",
+        "No physical device validation"
+      ],
+      "actor": "Development",
+      "event_id": "cuevaro-independent-hardening",
+      "timestamp": "2026-10-05T15:40:24.2523089Z",
+      "title": "Independent review repairs and isolated backport investigation; private managed-service proposal prepared",
+      "event_type": "implementation",
+      "evidence": [
+        "docs/INDEPENDENT_REVIEW.md",
+        "docs/VALIDATION.md",
+        "docs/DEPENDENCY_RISK.md",
+        "docs/PRIVATE_DEVELOPMENT_PLAN.md"
+      ],
+      "date": "2026-10-05"
+    },
+    {
+      "event_id": "cuevaro-document-preflight",
+      "timestamp": "2026-10-06T09:47:40.1606983Z",
+      "date": "2026-10-06",
+      "actor": "Development",
+      "event_type": "implementation",
+      "title": "Bounded document-region preflight and conservative completeness review verified",
+      "evidence": [
+        "docs/VALIDATION.md",
+        "docs/PRIVATE_DEVELOPMENT_PLAN.md",
+        "tests/document-preflight.test.ts"
+      ],
+      "limitations": [
+        "Synthetic benchmark only",
+        "Managed access and approved identities pending",
+        "Native hardware unverified",
+        "Dependency release gate remains blocked"
+      ]
+    },
+    {
+      "event_id": "cuevaro-client-privileges",
+      "timestamp": "2026-10-06T09:51:03.6491067Z",
+      "date": "2026-10-06",
+      "actor": "Development",
+      "event_type": "security_fix",
+      "title": "Reproduced RLS-bypassing client TRUNCATE and verified scoped forward privilege fix",
+      "evidence": [
+        "supabase/migrations/202610060003_client_privileges.sql",
+        "tests/client-privileges.test.ts",
+        "docs/INDEPENDENT_REVIEW.md"
+      ],
+      "limitations": [
+        "No live provider applied",
+        "Custom inherited roles and column ACLs unverified",
+        "Managed access and approved identities pending"
+      ]
+    },
+    {
+      "event_id": "cuevaro-bounded-pdf-text",
+      "timestamp": "2026-10-06T10:19:31.2556345Z",
+      "date": "2026-10-06",
+      "actor": "Development",
+      "event_type": "implementation",
+      "title": "Bounded actual PDF text extraction, page provenance, conflict uncertainty and mobile retrieval",
+      "evidence": [
+        "tests/pdf.test.ts",
+        "docs/VALIDATION.md",
+        "docs/INDEPENDENT_REVIEW.md"
+      ],
+      "limitations": [
+        "No scanned PDF OCR or native PDF viewing",
+        "No OS-level sandbox or representative adversarial corpus",
+        "Phase 1 gates and dependency gate remain open"
+      ]
+    },
+    {
+      "event_id": "cuevaro-alternate-receipt-formats",
+      "timestamp": "2026-10-06T10:30:51.7371813Z",
+      "date": "2026-10-06",
+      "actor": "Development",
+      "event_type": "implementation",
+      "title": "Explicit alternate receipt labels/date formats and conservative conflicting monetary evidence",
+      "evidence": [
+        "tests/receipt-layouts.test.ts",
+        "docs/VALIDATION.md",
+        "docs/INDEPENDENT_REVIEW.md"
+      ],
+      "limitations": [
+        "Labeled synthetic receipts only",
+        "No multi-item or unlabeled merchant inference",
+        "Phase 1 and dependency gates remain open"
+      ]
+    },
+    {
+      "event_id": "cuevaro-multi-page-photo-capture",
+      "timestamp": "2026-10-06T10:59:44.3916906Z",
+      "date": "2026-10-06",
+      "actor": "Development",
+      "event_type": "implementation",
+      "title": "Original-preserving multi-page capture, real per-page OCR, atomic recovery and reviewed identity fixes",
+      "evidence": [
+        "tests/capture-pages.test.ts",
+        "tests/e2e/mobile.spec.ts",
+        "docs/VALIDATION.md",
+        "docs/INDEPENDENT_REVIEW.md"
+      ],
+      "limitations": [
+        "Synthetic local verification only",
+        "Native hardware and live migration unverified",
+        "Phase 1 and dependency gates remain open"
+      ]
+    },
+    {
+      "event_id": "cuevaro-synthetic-extraction-evaluation",
+      "timestamp": "2026-10-06T11:06:15.6119827Z",
+      "date": "2026-10-06",
+      "actor": "Development",
+      "event_type": "validation",
+      "title": "Versioned ugly-input real OCR evaluation and original-preserving legacy page migration regression",
+      "evidence": [
+        "tests/extraction-benchmark.test.ts",
+        "tests/capture-pages.test.ts",
+        "docs/VALIDATION.md"
+      ],
+      "limitations": [
+        "Generated corpus is not calibrated or representative",
+        "Glare produced a wrong low-confidence merchant",
+        "Legacy migration tested in memory, not live Supabase",
+        "Phase 1 and dependency gates remain open"
+      ]
+    },
+    {
+      "event_id": "cuevaro-explicit-multi-item-review",
+      "timestamp": "2026-10-06T11:24:51.3411525Z",
+      "date": "2026-10-06",
+      "actor": "Development",
+      "event_type": "implementation",
+      "title": "Explicit per-item review, correction provenance, linked assertions and purchase-scoped history constraints",
+      "evidence": [
+        "tests/multi-item.test.ts",
+        "tests/e2e/mobile.spec.ts",
+        "docs/VALIDATION.md",
+        "docs/INDEPENDENT_REVIEW.md"
+      ],
+      "limitations": [
+        "Labeled synthetic candidates only",
+        "No inferred item coverage, quantity or line price",
+        "Managed/native/calibration and dependency gates remain open"
+      ]
+    },
+    {
+      "event_id": "cuevaro-correction-rescheduling-history",
+      "timestamp": "2026-10-06T11:52:55Z",
+      "date": "2026-10-06",
+      "actor": "Development",
+      "event_type": "implementation",
+      "title": "Immutable corrections, durable offline replay and preserved reminder intent",
+      "evidence": [
+        "tests/corrections.test.ts",
+        "tests/e2e/mobile.spec.ts",
+        "docs/VALIDATION.md",
+        "docs/INDEPENDENT_REVIEW.md"
+      ],
+      "limitations": [
+        "Synthetic local acceptance only",
+        "Live migration/native devices unverified",
+        "Managed access and dependency gates remain open"
+      ]
+    },
+    {
+      "event_id": "cuevaro-private-export-local-restore",
+      "timestamp": "2026-10-06T11:52:55Z",
+      "date": "2026-10-06",
+      "actor": "Development",
+      "event_type": "implementation",
+      "title": "Private structured export and original-preserving disposable database restore drill",
+      "evidence": [
+        "services/api/export.ts",
+        "scripts/export-development-record.ts",
+        "tests/corrections.test.ts",
+        "docs/VALIDATION.md",
+        "https://github.com/wasenotsok/Cuevaro/actions/runs/37459483092"
+      ],
+      "limitations": [
+        "Developer tool only; native export UX open",
+        "No managed backup/restore or JSON import claim",
+        "Phase 1 and dependency gate remain open"
+      ]
+    },
+    {
+      "event_id": "cuevaro-device-export-synthetic-evaluation-v2",
+      "timestamp": "2026-10-06T12:11:01Z",
+      "date": "2026-10-06",
+      "actor": "Development",
+      "event_type": "implementation",
+      "title": "On-device archive UX, owned temporary cleanup and sixteen-case generated quality/OCR regression",
+      "evidence": [
+        "tests/device-export.test.ts",
+        "tests/e2e/mobile.spec.ts",
+        "tests/extraction-benchmark.test.ts",
+        "docs/VALIDATION.md",
+        "https://github.com/wasenotsok/Cuevaro/actions/runs/37461734642"
+      ],
+      "limitations": [
+        "Native sharing mocked; physical SDK/devices unavailable",
+        "Generated OCR is not representative calibration",
+        "Phase 1/managed/dependency gates open"
+      ]
+    },
+    {
+      "event_id": "cuevaro-keyboard-validation-native-preparation",
+      "timestamp": "2026-10-07T15:50:00Z",
+      "date": "2026-10-07",
+      "actor": "Development",
+      "event_type": "implementation",
+      "title": "Reproduced and repaired quick-reply focus loss, accessible invalid-correction refusal and non-vacuous semantic benchmark checks; Android preparation",
+      "evidence": [
+        "apps/mobile/action-button.tsx",
+        "tests/e2e/mobile.spec.ts",
+        "tests/extraction-benchmark.test.ts",
+        "docs/VALIDATION.md",
+        "docs/NATIVE_VALIDATION.md"
+      ],
+      "limitations": [
+        "80 unit/integration and 15 browser journeys are local synthetic evidence",
+        "Android prebuild succeeded; Java 8 Gradle TLS failure and missing SDK/device block compilation/acceptance",
+        "iOS requires separate macOS/Xcode/hardware; managed access and release dependency gate remain open"
+      ]
+    },
+    {
+      "event_id": "cuevaro-managed-baseline-review-storage-signing-hardening",
+      "timestamp": "2026-10-08T02:16:05Z",
+      "date": "2026-10-08",
+      "actor": "Development",
+      "event_type": "implementation",
+      "title": "Verified named managed read access, reviewed atomic migration handoff and repaired client signed URL bypass",
+      "evidence": [
+        "supabase/reviewed/manifest.json",
+        "supabase/tests/managed-role-checks.sql",
+        "tests/managed-adapter.test.ts",
+        "tests/storage-policy.test.ts",
+        "tests/migration-bundle.test.ts",
+        "docs/MANAGED_DEVELOPMENT_VALIDATION.md"
+      ],
+      "limitations": [
+        "Parent is sole migration executor; desktop performed no managed mutation",
+        "Zero Auth users; approved identities and secure runtime config unavailable",
+        "Actual Auth/Storage/expiry/restore and native acceptance remain open; dependency gate enforced"
+      ]
+    },
+    {
+      "event_id": "cuevaro-managed-atomic-baseline-applied-sql-verified",
+      "timestamp": "2026-10-08T02:25:24Z",
+      "date": "2026-10-08",
+      "actor": "Parent-coordinated development executor",
+      "event_type": "validation",
+      "title": "Applied atomic baseline20261008022037 once and passed managed SQL-role/isolation/privilege/history checks",
+      "evidence": [
+        "supabase/reviewed/manifest.json",
+        "supabase/tests/managed-role-checks.sql",
+        "docs/MANAGED_DEVELOPMENT_VALIDATION.md"
+      ],
+      "migration_version": "20261008022037",
+      "bundle_sha256": "fc98ebf1afa8283f7e1400898db144a1b24acca63aa12331fccbf61b9cc85b13",
+      "limitations": [
+        "SQL-role simulation is not Auth/StorageAPI login/upload/expiry proof",
+        "Advisors retain reviewed bootstrap warning, intentional deny-all policy information and index information",
+        "Managed backup/restore/native hardware/dependency release gate remain open"
+      ]
+    },
+    {
+      "event_id": "cuevaro-process-only-managed-runtime-fixture-handoff",
+      "timestamp": "2026-10-08T02:53:22Z",
+      "date": "2026-10-08",
+      "actor": "Development",
+      "event_type": "implementation",
+      "title": "Prepared process-only managed composition, masked Owner launcher and local synthetic fixture/readback SQL tools",
+      "evidence": [
+        "docs/MANAGED_RUNTIME_HANDOFF.md",
+        "tests/managed-runtime.test.ts",
+        "tests/managed-fixture.test.ts"
+      ],
+      "limitations": [
+        "97 local tests pass; final commit requires own CI",
+        "No credentials retrieved, accounts created, network API acceptance or managed writes",
+        "Local byte matching is not actual Storage provenance; managed DB/job wiring and native/device gates remain open"
+      ]
+    },
+    {
+      "event_id": "cuevaro-managed-application-wiring",
+      "timestamp": "2026-10-08T03:39:29Z",
+      "date": "2026-10-08",
+      "actor": "Development",
+      "event_type": "implementation",
+      "title": "Reused existing application commands with bounded PostgreSQL and immutable managed originals",
+      "evidence": [
+        "tests/managed-application.test.ts",
+        "tests/postgres-adapter.test.ts",
+        "tests/postgres-service.test.ts",
+        "docs/MANAGED_RUNTIME_HANDOFF.md"
+      ],
+      "limitations": [
+        "114 local tests pass; real PG17 test requires exact CI",
+        "Forward private review-draft migration unapplied; no managed writes/live startup",
+        "Auth identities approved; Owner-only credentials and no-bypass verification boundary remain",
+        "Phase1/native/dependency release gates open"
+      ]
+    },
+    {
+      "event_id": "cuevaro-postgres17-ci-check",
+      "timestamp": "2026-10-08T03:49:00Z",
+      "date": "2026-10-08",
+      "actor": "Development",
+      "event_type": "validation",
+      "title": "Real PostgreSQL17 check step passed after correcting Stop assertion",
+      "head": "ce50a3d1288fb44835336874d5b152f83cb67417",
+      "evidence": [
+        "https://github.com/wasenotsok/Cuevaro/actions/runs/37724288431"
+      ],
+      "limitations": [
+        "Remaining CI browser/export steps still running at record time",
+        "Managed Auth/Storage/native/dependency gates remain open"
+      ]
+    },
+    {
+      "event_id": "cuevaro-managed-review-table-applied",
+      "timestamp": "2026-10-08T03:58:37Z",
+      "date": "2026-10-08",
+      "actor": "Development",
+      "event_type": "managed_validation",
+      "title": "Parent applied and validated private review table once; desktop preserved exact receipt/SQL",
+      "migration_version": "20261008035615",
+      "source_commit": "47785e1f20bfe3b9c97b1ef322736e68212ece3d",
+      "body_sha256": "380c244a80f4650556d1bd8532da702ad67acbdd52dd7888322a4479c14c584f",
+      "evidence": [
+        "docs/managed-review-drafts-evidence-2026-10-08.json",
+        "supabase/tests/cuevaro-managed-review-drafts-role-checks.sql"
+      ],
+      "limitations": [
+        "SQL claims/role checks are not genuine Auth/API acceptance",
+        "No Auth account creation, password/key handling, Storage byte operations, URL expiry, API startup or hosting in this application",
+        "Managed export/backup/restore and native acceptance remain unverified; dependency gate unchanged"
+      ]
     }
   ]
 }

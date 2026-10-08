@@ -1,0 +1,48 @@
+name: Cuevaro development quality
+on:
+  push:
+    branches-ignore: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Disposable CI fixture only: no project credentials, external users or managed writes.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: cuevaro_synthetic_ci
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 127.0.0.1:5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d cuevaro_synthetic_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+        env:
+          CUEVARO_DISPOSABLE_POSTGRES: '1'
+      - run: npm run format:check
+      - run: npm run build:mobile
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+  dependency-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm audit --audit-level=high

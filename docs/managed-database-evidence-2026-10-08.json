@@ -1,0 +1,167 @@
+{
+  "project_ref": "wqwapaklrfpckhgjsejf",
+  "project_name": "Cuevaro Development",
+  "region": "ap-southeast-1",
+  "database_version": "17.11.0.003",
+  "date_utc": "2026-10-08",
+  "source_commit": "1c05bd8c5fb6d45e9dfde0f7e09883efc1b541a6",
+  "migration": {
+    "version": "20261008022037",
+    "name": "cuevaro_phase1_development_baseline",
+    "apply_calls": 1,
+    "bundle": {
+      "path": "supabase/reviewed/phase1-development-baseline.sql",
+      "sha256": "fc98ebf1afa8283f7e1400898db144a1b24acca63aa12331fccbf61b9cc85b13"
+    },
+    "source_migrations": [
+      {
+        "path": "supabase/migrations/202610050001_foundation.sql",
+        "sha256": "32ee16aa24f90e7eb8d5ea53a89facb37490fdbb7a274eecee2491e8c8eb7883"
+      },
+      {
+        "path": "supabase/migrations/202610050002_private_storage.sql",
+        "sha256": "56f6a29aaec467bd5fe9e8f3d6efc4504cd36163a3e6a343823a86d4364c1826"
+      },
+      {
+        "path": "supabase/migrations/202610060003_client_privileges.sql",
+        "sha256": "e4df9d52b4192db039f0e7971c4878a014f982976a2055c6ca0cd5b31ed2bdd0"
+      },
+      {
+        "path": "supabase/migrations/202610060004_evidence_pages.sql",
+        "sha256": "6aa7a528c8cf5df4514e9381d74f04c7f9b0503eefcf1cc593aa46bbcb2c4bd3"
+      },
+      {
+        "path": "supabase/migrations/202610060005_item_facts.sql",
+        "sha256": "83b4f086ccea1f5eeb0fe7f6eee01d3ae92faecc8063ffde8efa990c8b44dc48"
+      },
+      {
+        "path": "supabase/migrations/202610060006_correction_receipts.sql",
+        "sha256": "8b8e916713f2a48f96d4884f9272c2b658a8d737eb726008b918303fc48fb282"
+      },
+      {
+        "path": "supabase/migrations/20261008020853_storage_download_only.sql",
+        "sha256": "85d031db2feca82160801bf771e406d99e832f7cae2d102792295fdc8082f402"
+      }
+    ],
+    "tracking_note": "One bundled remote migration; do not reapply the seven source migrations individually. Preserve this mapping when reconciling future CLI migration history."
+  },
+  "verification": {
+    "pre_apply": {
+      "migrations": 0,
+      "public_tables": 0,
+      "public_functions": 0,
+      "private_schema_exists": false,
+      "auth_users": 0,
+      "buckets": 0,
+      "storage_objects": 0,
+      "policies": 0
+    },
+    "after_apply": {
+      "public_tables_with_rls": 13,
+      "private_tables_with_rls": 1,
+      "public_authenticated_select_policies": 13,
+      "private_policy_count": 0,
+      "storage_policy": "evidence_read: authenticated SELECT, evidence bucket, object.get_authenticated only, matching evidence metadata and current household membership",
+      "bucket": {
+        "name": "evidence",
+        "public": false,
+        "file_size_limit": 20000000,
+        "allowed_mime_types": [
+          "image/jpeg",
+          "image/png",
+          "application/pdf"
+        ]
+      },
+      "unexpected_anon_or_authenticated_table_privileges": [],
+      "pg17_maintain_denied": true,
+      "security_definer_functions": {
+        "functions": [
+          "public.create_household",
+          "private.can_access"
+        ],
+        "search_path": "",
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      }
+    },
+    "reviewed_role_checks": {
+      "path": "supabase/tests/managed-role-checks.sql",
+      "sha256": "c574bdaa29889ef0029977ade1ee8eeb1298ba9b37a0a893045c493c82610f9c",
+      "result": "passed",
+      "transaction": "rolled back"
+    },
+    "supplemental_checks": {
+      "path": "cuevaro-managed-supplemental-role-checks.sql",
+      "result": "passed",
+      "coverage": [
+        "owner/member/viewer authorization",
+        "revoked member with unchanged claims",
+        "empty identity/RPC denial",
+        "region/timezone validation",
+        "tenant graph reads",
+        "client UPDATE/TRUNCATE/escalation denial",
+        "cross-household evidence/observation FK denial",
+        "wrong-purchase item/history FK denial",
+        "one history successor"
+      ],
+      "initial_attempt": "Fixture used occupied page 1 and hit valid uniqueness constraint before intended FK. Failed transaction rollback independently verified. Corrected fixture to vacant page 2; same FK assertion passed on rerun.",
+      "transaction": "rolled back",
+      "sha256": "12460b37f1a4ecd2301a70850acac670620e0f2d4c29fbb3f6e7555fabde0f6c"
+    },
+    "final_checked_row_counts": {
+      "households": 0,
+      "memberships": 0,
+      "captures": 0,
+      "evidence_objects": 0,
+      "observations": 0,
+      "purchases": 0,
+      "items": 0,
+      "fact_assertions": 0,
+      "purchase_commands": 0,
+      "auth_users": 0,
+      "storage_objects": 0
+    },
+    "advisors": {
+      "security": [
+        {
+          "level": "WARN",
+          "code": "authenticated_security_definer_function_executable",
+          "count": 1,
+          "object": "public.create_household",
+          "assessment": "Intentional bounded authenticated RPC. Explicit auth.uid guard, input validation and empty search_path reviewed. Warning remains; no blanket clean security claim.",
+          "url": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable"
+        },
+        {
+          "level": "INFO",
+          "code": "rls_enabled_no_policy",
+          "count": 1,
+          "object": "private.purchase_commands",
+          "assessment": "Intentional deny-client private replay-receipt table; RLS enabled, no client grants.",
+          "url": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy"
+        }
+      ],
+      "performance": [
+        {
+          "level": "INFO",
+          "code": "unindexed_foreign_keys",
+          "count": 15,
+          "url": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys"
+        },
+        {
+          "level": "INFO",
+          "code": "unused_index",
+          "count": 4,
+          "assessment": "Fresh empty schema. No indexes removed.",
+          "url": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index"
+        }
+      ]
+    },
+    "limitations": [
+      "Tests used transaction-local simulated JWT claims on actual managed PostgreSQL; no genuine Auth issuance/session verification.",
+      "No auth.users or storage.objects mutation; no real object upload/download/hash roundtrip.",
+      "Operation-helper and policy checks do not establish HTTP endpoint rejection or signed-URL expiry.",
+      "Managed backup/export/restore, real Auth configuration, complete managed application connection and native hardware acceptance remain unverified.",
+      "No secrets, new credentials, paid services, production/public application deployment or dependency gate bypass."
+    ]
+  }
+}

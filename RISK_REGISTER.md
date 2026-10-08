@@ -35,8 +35,13 @@ Scoring: Probability (P) and Impact (I): Low / Medium / High
 | R-28 | Overengineering delays validation | H | M | managed services, monolith+worker, phase gates, no premature microservices |
 | R-29 | No real iOS/Android device testing | M | H | physical device matrix before beta |
 | R-30 | Public repo accidentally receives secrets/private data | M | H | secret scanning, .gitignore, fixture policy, CI checks |
+| R-31 | Synthetic developer slice mistaken for complete native product | M | H | visible development mode, no cloud/push claims, native hardware and managed-service gates stay open |
+| R-32 | Global image heuristics miss local glare, cut-off, skew or occlusion | H | H | missing verified geometry yields Questionable; mandatory override and fact review; calibrated camera benchmark/detectors still required |
+| R-33 | Unpatched upstream tooling advisories propagate into release | M | H | separate failing CI dependency gate; synthetic loopback-only scope; no release waiver; track upstream fixes |
 
 ## Top launch risks
+
+2026-10-06 synthetic evidence for R-01/R-17/R-18/R-32: ordered multi-page originals, atomic assembly failure and lost-acknowledgement restart are now covered, with independent deduplication/revocation/rebinding fixes. Generated glare still produced a wrong low-confidence merchant; review and Unknown remain necessary. This reduces specific development gaps without closing camera calibration, native storage, managed upgrade or release risks. See docs/VALIDATION.md and docs/INDEPENDENT_REVIEW.md.
 
 The five risks that should dominate early product decisions:
 
@@ -68,3 +73,13 @@ Cuevaro V1 is not:
 - a complete document management suite.
 
 Keeping this boundary protects time, security, and comprehension.
+
+## Synthetic extraction review checkpoint - 2026-10-06
+
+False-confidence risk remains active. Camouflaged receipt covers cannot establish complete evidence from pixels; embedded PDF text may be hidden/differ from visible pages; valid monetary lines may coexist with malformed/conflicting labeled evidence. Implemented controls: unresolved completeness/explicit continuation, visible PDF warning and low-confidence review, Unknown on competing monetary/date evidence with provenance retained. Synthetic regressions and independent review are in docs/VALIDATION.md and docs/INDEPENDENT_REVIEW.md. None establishes representative calibration or closes the risk. Native viewing/rendering, adversarial PDF corpus, managed isolation and production delivery remain unverified.
+
+Device export risk checkpoint (2026-10-06): plaintext ZIP copies outside Cuevaro cannot be recalled. Explicit destination warning and scoped temporary-file cleanup/restart visibility are implemented. OS delivery is not inferred from chooser closure; actual file-provider/device lifecycle remains unverified. Generated OCR v2 still exposes glare merchant error and cannot establish representative accuracy.
+
+2026-10-07 native evidence clarification: Android generated prebuild succeeds with SQLCipher/Hermes configuration, but installed Java 8 fails official Gradle TLS trust and Android SDK/device is absent. Do not bypass trust validation or equate generated configuration/bundles with compiled/runtime security. iOS requires separate macOS/Xcode/device validation. Keyboard focus/error regressions are repaired in browser; OS accessibility/native theme remains open. See docs/NATIVE_VALIDATION.md.
+
+2026-10-08 storage review: generic SELECT could authorize direct client signing with arbitrary positive lifetime. Reviewed forward policy permits authenticated raw downloads only, preserving bounded server signing with fresh authorization and metadata identity checks. Already-issued URLs remain bearer access until expiry; revocation cannot recall downloaded originals. Real API denial/expiration remains unverified until approved identities and synthetic StorageAPI fixtures exist. SQL-role fixtures must not be labeled Auth/upload/backup acceptance.
